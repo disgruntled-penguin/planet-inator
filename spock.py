@@ -1,4 +1,5 @@
-import rebound
+# spock demo 
+import rebound 
 from spock import FeatureClassifier
 feature_model = FeatureClassifier()
 
@@ -11,3 +12,4 @@ sim.move_to_com()
 
 print(feature_model.predict_stable(sim))
 # >>> 0.06591137
+
