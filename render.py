@@ -11,7 +11,7 @@ import numpy as np
 
 WIDTH = 1000
 HEIGHT = 1000
-VIEWPORT_HALF_SIZE = 50 #change this for closer look at inner planets (=3) (have to add zoom)
+VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) (have to add zoom)
 # VIEWPORT_HALF_SIZE = 31
 # VIEWPORT_HALF_SIZE = 14
 VIEWPORT = ((-VIEWPORT_HALF_SIZE, -VIEWPORT_HALF_SIZE), (VIEWPORT_HALF_SIZE, VIEWPORT_HALF_SIZE))
@@ -43,6 +43,7 @@ def main(output_video):
     orbits_surface = pygame.Surface(SIZE)
     bodies_surface = pygame.Surface(SIZE)
     bodies_surface.set_colorkey((0, 0, 0))
+    #font = pygame.font.Font('freesansbold.ttf', 32)
     
 
     screen.fill((0, 0, 0))
@@ -53,6 +54,8 @@ def main(output_video):
 
     delay = 0.025 # 25ms bw frames
     log_t = 0 # time tracker for logging
+    month = 11
+    week = 44
 
 
     paused = False 
@@ -86,14 +89,54 @@ def main(output_video):
 
         pygame.display.update()
 
-        #if output_video:
+        if output_video:
+            video_writer.write(image_from_screen(screen))
 
         if not paused:
-            sim.iterate() # simsteps
+            sim.iterate() #sim step one at a time
 
-            t_delta = time.time() - t_start #fram rate control
+            t_delta = time.time() - t_start    #frame rate contrpl
             if t_delta < delay:
                 time.sleep(delay - t_delta)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                if output_video:
+                    video_writer.release()
+                pygame.quit()
+                quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = not paused
+                elif event.key == pygame.K_s:
+                    save_screenshot(screen, sim.t)
+                elif event.key == pygame.K_q:
+                    if output_video:
+                        video_writer.release()
+                    pygame.quit()
+                    quit()
+
+
+def save_screenshot(screen, t):
+    image = image_from_screen(screen)
+    t_str = format_time(t).replace('.', '_')
+    filename = f'screenshot_t_{t_str}.png'
+    cv.imwrite(filename, image)
+    print(f'Wrote screenshot {filename}')
+    pass
+
+
+def image_from_screen(screen):
+    assert screen.get_bytesize() == 4, "Screen should be RGBA"
+    width, height = screen.get_size()
+    buffer = screen.get_buffer().raw
+    image = np.ndarray((width, height, screen.get_bytesize()), 'uint8', buffer)
+    return cv.cvtColor(image, cv.COLOR_BGRA2BGR)
+
+
+def format_time(t):
+    return str(round(t/(2*np.pi), 1))
+
 
 def get_time(t):
     return t/(2*np.pi)
