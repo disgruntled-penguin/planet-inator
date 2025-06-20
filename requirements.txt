@@ -1,0 +1,9 @@
+pygame
+graphics.py
+rebound
+numpy
+matplotlib
+tk
+click
+opencv-python
+   

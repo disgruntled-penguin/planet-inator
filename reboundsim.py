@@ -32,7 +32,7 @@ class Simulation:
 
         m_earth = 1 / 333000  # Earth's mass in solar masses
 
-
+        
         self.add(name='Mercury', size=0.015, color='gray',
          m=0.0553 * m_earth, a=0.387, e=0.2056,
          inc=np.radians(7.0), Omega=np.radians(48.3), omega=np.radians(29.1), f=np.radians(174))
