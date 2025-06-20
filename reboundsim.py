@@ -71,10 +71,14 @@ class Simulation:
         self.add(name='Neptune', size=0.035, color='blue',
          m=17.1 * m_earth, a=30.07, e=0.0086,
          inc=np.radians(1.77), Omega=np.radians(131.8), omega=np.radians(273.2), f=np.radians(256)) 
+        
+        self.add(name="doofs-planet", size=0.05, color="purple",
+         m=6 * m_earth, a=6, e=0.03,
+         inc=np.radians(7.0), Omega=np.radians(48.3), omega=np.radians(29.1), f=np.radians(174))
 
 
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (40 * np.pi) / 1000 #speed of simulation in a way
+        self.delta_t = (14 * np.pi) / 1000 #speed of simulation in a way
         
     
     def add(self, name='noname', size=10, color='black', **kwargs):

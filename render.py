@@ -11,7 +11,7 @@ import numpy as np
 
 WIDTH = 1000
 HEIGHT = 1000
-VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) (have to add zoom)
+VIEWPORT_HALF_SIZE = 50 #change this for closer look at inner planets (=3) (have to add zoom)
 # VIEWPORT_HALF_SIZE = 31
 # VIEWPORT_HALF_SIZE = 14
 VIEWPORT = ((-VIEWPORT_HALF_SIZE, -VIEWPORT_HALF_SIZE), (VIEWPORT_HALF_SIZE, VIEWPORT_HALF_SIZE))
