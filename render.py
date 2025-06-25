@@ -121,6 +121,7 @@ def main(output_video):
     log_t = 0 # time tracker for logging
     month = 11
     week = 44
+    
 
     dragging = False
     drag_start_pos = None 
@@ -177,13 +178,13 @@ def main(output_video):
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
         #logging
-        if get_time(sim.t) > log_t: 
+        '''if get_time(sim.t) > log_t: 
             print(f't={get_time(sim.t):.2f}, month {int((week-1)/4.3)+1:2d}, week {week:2d}: {sun_distance}')
             log_t += 1/52
             if week == 52:
                 week = 1
             else:
-                week += 1
+                week += 1'''
 
         pygame.display.update()
 
@@ -248,7 +249,7 @@ def main(output_video):
 def save_screenshot(screen, t):
     image = image_from_screen(screen)
     t_str = format_time(t).replace('.', '_')
-    filename = f'screenshot_t_{t_str}.png'
+    filename = f'year_t_{t_str}.png'
     cv.imwrite(filename, image)
     print(f'Wrote screenshot {filename}')
     pass

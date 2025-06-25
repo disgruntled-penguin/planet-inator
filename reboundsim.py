@@ -32,27 +32,27 @@ class Simulation:
 
         self.add(name='Sun', size=0.1, color='yellow', m=1) 
 
-        m_earth = 1 / 333000  # Earth's mass in solar masses
+        m_earth = 1 / 332946.0487 # Earth's mass in solar masses
 
         
         self.add(name='Mercury', size=0.015, color='gray',
-         m=0.0553 * m_earth, a=0.387, e=0.2056,
-         inc=np.radians(7.0), Omega=np.radians(48.3), omega=np.radians(29.1), f=np.radians(174))
+          m=0.0553 * m_earth, a=0.387098, e=0.205630,
+          inc=np.radians(7.005), Omega=np.radians(48.331), omega=np.radians(29.124), f=np.radians(174))
 
 
         self.add(name='Venus', size=0.02, color='orange',
-         m=0.815 * m_earth, a=0.723, e=0.0067,
-         inc=np.radians(3.4), Omega=np.radians(76.7), omega=np.radians(54.9), f=np.radians(50))
+          m=0.815 * m_earth, a=0.723332, e=0.006772,
+          inc=np.radians(3.39458), Omega=np.radians(76.680), omega=np.radians(54.884), f=np.radians(50))
 
 
         self.add(name='Earth', size=0.025, color='blue',
-         m=1.0 * m_earth, a=1.0, e=0.0167,
-         inc=np.radians(0.0), Omega=np.radians(-11.3), omega=np.radians(114.2), f=np.radians(100))
+           m=1.0 * m_earth, a=1.000000, e=0.016710,
+           inc=np.radians(0.000), Omega=np.radians(-11.26064), omega=np.radians(114.207), f=np.radians(100))
 
 
         self.add(name='Mars', size=0.018, color='red',
-         m=0.107 * m_earth, a=1.524, e=0.0934,
-         inc=np.radians(1.85), Omega=np.radians(49.6), omega=np.radians(286.5), f=np.radians(150))
+          m=0.107 * m_earth, a=1.523679, e=0.093400,
+          inc=np.radians(1.850), Omega=np.radians(49.558), omega=np.radians(286.502), f=np.radians(150))
 
 
         self.add(name='Jupiter', size=0.05, color='orange',
@@ -74,13 +74,16 @@ class Simulation:
          m=17.1 * m_earth, a=30.07, e=0.0086,
          inc=np.radians(1.77), Omega=np.radians(131.8), omega=np.radians(273.2), f=np.radians(256)) 
         
-        self.add(name="doofs-planet", size=0.05, color="purple",
-         m=6 * m_earth, a=6, e=0.03,
-         inc=np.radians(7.0), Omega=np.radians(48.3), omega=np.radians(29.1), f=np.radians(174))
+        self.add(name="doofs-planet", size=0.07, color="purple",
+            m=400 * m_earth,  
+            a=3.3,             
+            e=0.3,             
+            inc=np.radians(15),  # Inclined orbit — orbit not in same plane
+            Omega=np.radians(80), omega=np.radians(60), f=np.radians(10))
 
         self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (14 * np.pi) / 1000 #speed of simulation in a way
+        self.delta_t = (14 * np.pi) * 100 #7 * 2pi * 100 - 7*100 revolutions of eath/s - 700 * fps years/s = 28e3 yrs/s
         print(self.delta_t)
 
 
