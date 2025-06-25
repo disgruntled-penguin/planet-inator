@@ -5,6 +5,7 @@ import cv2 as cv
 import click
 import math
 import numpy as np
+import random
 
 
 
@@ -16,6 +17,21 @@ MIN_ZOOM = 0.1
 MAX_ZOOM = 100 
 
 SIZE = WIDTH, HEIGHT
+
+NUM_STARS = 300  
+STAR_MIN_BRIGHTNESS = 30  # 
+STAR_MAX_BRIGHTNESS = 180  # out of 255
+STAR_MIN_SIZE = 1
+STAR_MAX_SIZE = 1.5
+
+# Generate star field once
+star_field = []
+for _ in range(NUM_STARS):
+    x = random.randint(0, WIDTH-1)
+    y = random.randint(0, HEIGHT-1)
+    brightness = random.randint(STAR_MIN_BRIGHTNESS, STAR_MAX_BRIGHTNESS)
+    size = random.uniform(STAR_MIN_SIZE, STAR_MAX_SIZE)
+    star_field.append((x, y, brightness, size))
 
 class Zwoom:
     def __init__(self, initial_half_size):
@@ -104,8 +120,8 @@ def main(output_video):
     pygame.init()
 
     screen = pygame.display.set_mode(SIZE)
-    orbits_surface = pygame.Surface(SIZE)
-    bodies_surface = pygame.Surface(SIZE)
+    orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
+    bodies_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface.set_colorkey((0, 0, 0))
     #pygame.font.init()
     font = pygame.font.Font('freesansbold.ttf', 16)
@@ -126,15 +142,23 @@ def main(output_video):
     dragging = False
     drag_start_pos = None 
     paused = False 
+    stars_visible = True  # Toggle for star field
 
     while True:
         t_start = time.time()
 
-        bodies_surface.fill((0, 0, 0))
+        # Draw star field background if enabled
+        screen.fill((0, 0, 0))
+        if stars_visible:
+            for x, y, brightness, size in star_field:
+                color = (brightness, brightness, brightness)
+                pygame.draw.circle(screen, color, (x, y), int(size))
+
+        bodies_surface.fill((0, 0, 0, 0))
 
           # Clear orbit surface only when zoom changes
         if viewport.zoom_changed:
-            orbits_surface.fill((0, 0, 0))
+            orbits_surface.fill((0, 0, 0, 0))
             # Redraw all existing trail points at new zoom level
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
@@ -170,7 +194,7 @@ def main(output_video):
         screen.blit(orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f}", True, (255, 255, 255))
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f} | Stars: {'ON' if stars_visible else 'OFF'}", True, (255, 255, 255))
         #controls_text = font.render("Controls: +/- to zoom, R to reset, P to pause, S to screenshot, Q to quit, Drag to pan", True, (255, 255, 255))
         screen.blit(zoom_text, (10, 10))
         #screen.blit(controls_text, (10, 50))
@@ -214,7 +238,8 @@ def main(output_video):
                         video_writer.release()
                     pygame.quit()
                     quit()
-            
+                elif event.key == pygame.K_t:
+                    stars_visible = not stars_visible
                 elif event.key == pygame.K_PLUS:
                     viewport.zoom_in()
                 elif event.key == pygame.K_MINUS:

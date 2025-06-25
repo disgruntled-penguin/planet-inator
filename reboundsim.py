@@ -83,7 +83,7 @@ class Simulation:
 
         self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (14 * np.pi) * 100 #7 * 2pi * 100 - 7*100 revolutions of eath/s - 700 * fps years/s = 28e3 yrs/s
+        self.delta_t = (14 * np.pi) # 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
         print(self.delta_t)
 
 
