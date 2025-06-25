@@ -11,88 +11,24 @@ import numpy as np
 
 WIDTH = 1000
 HEIGHT = 1000
-VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
-MIN_ZOOM = 0.1  
-MAX_ZOOM = 100 
+VIEWPORT_HALF_SIZE = 50 #change this for closer look at inner planets (=3) (have to add zoom)
+# VIEWPORT_HALF_SIZE = 31
+# VIEWPORT_HALF_SIZE = 14
+VIEWPORT = ((-VIEWPORT_HALF_SIZE, -VIEWPORT_HALF_SIZE), (VIEWPORT_HALF_SIZE, VIEWPORT_HALF_SIZE))
 
 SIZE = WIDTH, HEIGHT
+VIEWPORT_WIDTH = VIEWPORT[1][0] - VIEWPORT[0][0]
+VIEWPORT_HEIGHT = VIEWPORT[1][1] - VIEWPORT[0][1]
 
-class Zwoom:
-    def __init__(self, initial_half_size):
-        self.half_size = initial_half_size
-        self.zoom_factor = 1.0
-        self.zoom_changed = False
-        self.center_x = 0.0  # Viewport center offset
-        self.center_y = 0.0
-    
-    def get_viewport(self):
-        return ((self.center_x - self.half_size, self.center_y - self.half_size), 
-                (self.center_x + self.half_size, self.center_y + self.half_size))
-    
-    def get_viewport_width(self):
-        return self.half_size * 2
-    
-    def get_viewport_height(self):
-        return self.half_size * 2
-    
-    def zoom_in(self, factor=1.2):
-        new_half_size = self.half_size / factor
-        if new_half_size >= MIN_ZOOM:
-            self.half_size = new_half_size
-            self.zoom_factor *= factor
-            self.zoom_changed = True
-    
-    def zoom_out(self, factor=1.2):
-        new_half_size = self.half_size * factor
-        if new_half_size <= MAX_ZOOM:
-            self.half_size = new_half_size
-            self.zoom_factor /= factor
-            self.zoom_changed = True
-    
-    def reset_zoom(self):
-        self.half_size = VIEWPORT_HALF_SIZE
-        self.zoom_factor = 1.0
-        self.center_x = 0.0
-        self.center_y = 0.0
-        self.zoom_changed = True
-    
-    def pan(self, dx, dy):
-        # drag - world cordinates
-        world_dx = (dx / WIDTH) * self.get_viewport_width()
-        world_dy = -(dy / HEIGHT) * self.get_viewport_height()  # Invert Y
-        self.center_x -= world_dx
-        self.center_y -= world_dy
-        self.zoom_changed = True
 
-class OrbitTrail:
-    def __init__(self):
-        self.trails = {}  # body_id -> (x, y)
-    
-    def add_position(self, body_id, x, y):
-        if body_id not in self.trails:
-            self.trails[body_id] = []
-        
-        self.trails[body_id].append((x, y))
-        # no fade
-    
-    def get_trail(self, body_id):
-        return self.trails.get(body_id, [])
-
-# Global viewport instance
-viewport = Zwoom(VIEWPORT_HALF_SIZE)
-orbit_trail = OrbitTrail()
 def viewport_to_pixels(x, y):
-    current_viewport = viewport.get_viewport()
-    viewport_width = viewport.get_viewport_width()
-    viewport_height = viewport.get_viewport_height()
-    
-    if x < current_viewport[0][0] or x > current_viewport[1][0]: 
+    if x < VIEWPORT[0][0] or x > VIEWPORT[1][0]: 
         return None
-    if y < current_viewport[0][1] or y > current_viewport[1][1]:
+    if y < VIEWPORT[0][1] or y > VIEWPORT[1][1]:
         return None
 
-    px = ((x - current_viewport[0][0]) * WIDTH) / viewport_width
-    py = ((viewport_height - (y - current_viewport[0][1])) * HEIGHT) / viewport_height
+    px = ((x - VIEWPORT[0][0]) * WIDTH) / VIEWPORT_WIDTH
+    py = ((VIEWPORT_HEIGHT - (y - VIEWPORT[0][1])) * HEIGHT) / VIEWPORT_HEIGHT
 
     return px, py
 
@@ -107,8 +43,7 @@ def main(output_video):
     orbits_surface = pygame.Surface(SIZE)
     bodies_surface = pygame.Surface(SIZE)
     bodies_surface.set_colorkey((0, 0, 0))
-    #pygame.font.init()
-    font = pygame.font.Font('freesansbold.ttf', 16)
+    #font = pygame.font.Font('freesansbold.ttf', 32)
     
 
     screen.fill((0, 0, 0))
@@ -122,8 +57,7 @@ def main(output_video):
     month = 11
     week = 44
 
-    dragging = False
-    drag_start_pos = None 
+
     paused = False 
 
     while True:
@@ -131,48 +65,16 @@ def main(output_video):
 
         bodies_surface.fill((0, 0, 0))
 
-          # Clear orbit surface only when zoom changes
-        if viewport.zoom_changed:
-            orbits_surface.fill((0, 0, 0))
-            # Redraw all existing trail points at new zoom level
-            for i, body in enumerate(sim.bodies):
-                trail_positions = orbit_trail.get_trail(i)
-                for trail_x, trail_y in trail_positions:
-                    trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
-                    if trail_pixel_pos:
-                        pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
-            viewport.zoom_changed = False
-
-        # Add current positions to orbit trails and draw new trail points
-        for i, body in enumerate(sim.bodies):
-            current_pos = (body.x - sim.bodies[0].x, body.y - sim.bodies[0].y)
-            
-            # Only add and draw if this is a new position
-            trail_positions = orbit_trail.get_trail(i)
-            if not trail_positions or trail_positions[-1] != current_pos:
-                orbit_trail.add_position(i, current_pos[0], current_pos[1])
-                
-                # Draw only the new trail point
-                trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
-                if trail_pixel_pos:
-                    pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
-
-
     #time to render the celestial balls :p
         for body in sim.bodies:
          position = viewport_to_pixels(body.x - sim.bodies[0].x, body.y - sim.bodies[0].y) #distance relative to mc (sun)
          if position:
-                size = max((body.size * WIDTH) / (viewport.half_size * 2), 5) #change this
-                #pygame.draw.circle(orbits_surface, body.color, position, 1)
+                size = max((body.size * WIDTH) / (VIEWPORT_HALF_SIZE*2), 5) #change this
+                pygame.draw.circle(orbits_surface, body.color, position, 1)
                 pygame.draw.circle(bodies_surface, body.color, position, size)
             
         screen.blit(orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
-
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f}", True, (255, 255, 255))
-        #controls_text = font.render("Controls: +/- to zoom, R to reset, P to pause, S to screenshot, Q to quit, Drag to pan", True, (255, 255, 255))
-        screen.blit(zoom_text, (10, 10))
-        #screen.blit(controls_text, (10, 50))
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
@@ -213,36 +115,6 @@ def main(output_video):
                         video_writer.release()
                     pygame.quit()
                     quit()
-            
-                elif event.key == pygame.K_PLUS:
-                    viewport.zoom_in()
-                elif event.key == pygame.K_MINUS:
-                    viewport.zoom_out()
-                elif event.key == pygame.K_r or event.key == pygame.K_EQUALS:
-                    viewport.reset_zoom()
-                    print(f"Zoom reset: {viewport.zoom_factor:.2f}x")
-            
-            elif event.type == pygame.MOUSEBUTTONDOWN:  #fingers
-                if event.button == 4:  # Mouse wheel up # what
-                    viewport.zoom_in()
-                elif event.button == 5:  # Mouse wheel down
-                    viewport.zoom_out()
-                elif event.button == 1:  # Left mouse button
-                    dragging = True
-                    drag_start_pos = pygame.mouse.get_pos()
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:  # Left mouse button
-                    dragging = False
-                    drag_start_pos = None
-            elif event.type == pygame.MOUSEMOTION:
-                if dragging and drag_start_pos:
-                    current_pos = pygame.mouse.get_pos()
-                    dx = current_pos[0] - drag_start_pos[0]
-                    dy = current_pos[1] - drag_start_pos[1]
-                    viewport.pan(dx, dy)
-                    drag_start_pos = current_pos
-
-        
 
 
 def save_screenshot(screen, t):
