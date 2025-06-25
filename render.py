@@ -274,7 +274,7 @@ def main(output_video):
 def save_screenshot(screen, t):
     image = image_from_screen(screen)
     t_str = format_time(t).replace('.', '_')
-    filename = f'year_t_{t_str}.png'
+    filename = f'moments/year_t_{t_str}.png'
     cv.imwrite(filename, image)
     print(f'Wrote screenshot {filename}')
     pass
