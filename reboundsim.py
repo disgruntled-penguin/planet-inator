@@ -21,9 +21,11 @@ class Body:
     
 class Simulation:
     def __init__(self):
+        
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
         self.sim.dt = 0.1
+
 
 
         self.bodies = []
@@ -76,10 +78,13 @@ class Simulation:
          m=6 * m_earth, a=6, e=0.03,
          inc=np.radians(7.0), Omega=np.radians(48.3), omega=np.radians(29.1), f=np.radians(174))
 
-
+        self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
         self.delta_t = (14 * np.pi) / 1000 #speed of simulation in a way
-        
+        print(self.delta_t)
+
+
+
     
     def add(self, name='noname', size=10, color='black', **kwargs):
         particle = rebound.Particle(simulation=self.sim, **kwargs)
@@ -91,3 +96,9 @@ class Simulation:
     def iterate(self):
         self.sim.integrate(self.t)
         self.t += self.delta_t
+
+
+
+if __name__ == '__main__':
+    simulation = Simulation()
+   
