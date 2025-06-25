@@ -9,3 +9,7 @@ python3 render.py
 ```
 
 you can tweak doofs planet in reboundsim.py, youlll see his name!
+
+
+zoom and spock - mon 23/6
+
