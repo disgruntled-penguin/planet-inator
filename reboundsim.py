@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import rebound
+from doofs_planet_state import doofs_planet_state
 
 @dataclass
 class Body:
@@ -74,16 +75,29 @@ class Simulation:
          m=17.1 * m_earth, a=30.07, e=0.0086,
          inc=np.radians(1.77), Omega=np.radians(131.8), omega=np.radians(273.2), f=np.radians(256)) 
         
-        self.add(name="doofs-planet", size=0.07, color="purple",
-            m=400 * m_earth,  
-            a=3.3,             
-            e=0.3,             
-            inc=np.radians(15),  # Inclined orbit — orbit not in same plane
-            Omega=np.radians(80), omega=np.radians(60), f=np.radians(10))
+        # Add doofs-planet with live parameters
+        with doofs_planet_state.lock:
+            m_earth = 1 / 332946.0487 # Earth's mass in solar masses
+            m = doofs_planet_state.mass * m_earth
+            size = doofs_planet_state.size
+            color = doofs_planet_state.color if isinstance(doofs_planet_state.color, str) else (
+                f'#{doofs_planet_state.color[0]:02x}{doofs_planet_state.color[1]:02x}{doofs_planet_state.color[2]:02x}')
+            a = doofs_planet_state.a
+            e = doofs_planet_state.e
+            inc = np.radians(doofs_planet_state.inc)
+            Omega = np.radians(doofs_planet_state.Omega)
+            omega = np.radians(doofs_planet_state.omega)
+            f = np.radians(doofs_planet_state.f)
+        self.add(name="doofs-planet", size=size, color=color,
+            m=m,  
+            a=a,             
+            e=e,             
+            inc=inc,  # Inclined orbit
+            Omega=Omega, omega=omega, f=f)
 
         self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (14 * np.pi) # 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
+        self.delta_t = (14 * np.pi) / 100# 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
         print(self.delta_t)
 
 

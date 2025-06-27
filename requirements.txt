@@ -6,4 +6,4 @@ matplotlib
 tk
 click
 opencv-python
-   
+dearpygui
