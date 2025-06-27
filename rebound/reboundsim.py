@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 import rebound
 
+
 @dataclass
 class Body:
     name: str
@@ -20,6 +21,8 @@ class Body:
         return self.particle.y
     
 class Simulation:
+
+
     def __init__(self):
         
         self.sim = rebound.Simulation()
@@ -74,17 +77,50 @@ class Simulation:
          m=17.1 * m_earth, a=30.07, e=0.0086,
          inc=np.radians(1.77), Omega=np.radians(131.8), omega=np.radians(273.2), f=np.radians(256)) 
         
-        self.add(name="doofs-planet", size=0.07, color="purple",
+        '''self.add(name="doofs-planet", size=0.07, color="purple",
             m=400 * m_earth,  
             a=3.3,             
             e=0.3,             
             inc=np.radians(15),  # Inclined orbit — orbit not in same plane
-            Omega=np.radians(80), omega=np.radians(60), f=np.radians(10))
+            Omega=np.radians(80), omega=np.radians(60), f=np.radians(10))'''
+        
+        '''self.doof_params = {
+               "name": "doofs-planet",
+               "size": 0.07,
+               "color": "purple",
+               "m": 400 * m_earth,
+               "a": 3.3,
+               "e": 0.3,
+               "inc": np.radians(15),
+               "Omega": np.radians(80),
+               "omega": np.radians(60),
+               "f": np.radians(10)
+              }'''
+        self.add(**self.doof_params)
+        print("[debug] bodies added:", [b.name for b in self.bodies])
+
+
 
         self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (14 * np.pi) # 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
+        self.delta_t = (14 * np.pi) / 100# 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
         print(self.delta_t)
+
+    '''def update_doof_params(self, new_params):
+      
+      for key, val in new_params.items():
+        if key in self.doof_params:
+            self.doof_params[key] = val
+    # Remove and re-add doof's planet
+      self.bodies = [b for b in self.bodies if b.name != "doofs-planet"]
+      self.sim = rebound.Simulation()
+      self.sim.units = ('AU', 'yr', 'Msun')
+      self._add_initial_bodies()  # Write a method to re-add other planets here if needed
+      self.add(**self.doof_params)
+      self.sim.move_to_com()
+'''
+
+
 
 
 
@@ -96,9 +132,26 @@ class Simulation:
         body = Body(name=name, size=size, color=color, particle=particle)
         self.bodies.append(body)
 
+
+
     def iterate(self):
         self.sim.integrate(self.t)
         self.t += self.delta_t
+
+    def update_doof_params(self, new_params):
+     try:
+        print("[debug] Updating doof with:", new_params)
+        for key, val in new_params.items():
+            if key in self.doof_params:
+                self.doof_params[key] = val
+
+        self.sim = rebound.Simulation()
+        self.sim.units = ('AU', 'yr', 'Msun')
+        self.bodies.clear()
+        self.__init__()
+        print("[debug] Doof update complete.")
+     except Exception as e:
+        print("[CRASH IN update_doof_params]:", e)
 
 
 
