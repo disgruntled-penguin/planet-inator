@@ -12,7 +12,7 @@ import random
 
 WIDTH = 1000
 HEIGHT = 1000
-VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
+INITIAL_VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
 MIN_ZOOM = 0.1  
 MAX_ZOOM = 100 
 
@@ -66,7 +66,7 @@ class Zwoom:
             self.zoom_changed = True
     
     def reset_zoom(self):
-        self.half_size = VIEWPORT_HALF_SIZE
+        self.half_size = INITIAL_VIEWPORT_HALF_SIZE
         self.zoom_factor = 1.0
         self.center_x = 0.0
         self.center_y = 0.0
@@ -95,7 +95,7 @@ class OrbitTrail:
         return self.trails.get(body_id, [])
 
 # Global viewport instance
-viewport = Zwoom(VIEWPORT_HALF_SIZE)
+viewport = Zwoom(INITIAL_VIEWPORT_HALF_SIZE)
 orbit_trail = OrbitTrail()
 def viewport_to_pixels(x, y):
     current_viewport = viewport.get_viewport()
