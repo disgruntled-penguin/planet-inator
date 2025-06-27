@@ -6,6 +6,7 @@ import click
 import math
 import numpy as np
 import random
+from gui.triggers import PygameGUIControls
 
 
 
@@ -124,12 +125,18 @@ def main(output_video):
     orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface.set_colorkey((0, 0, 0))
-    #pygame.font.init()
     font = pygame.font.Font('freesansbold.ttf', 16)
-    
+
+    # State references for GUI
+    paused = {'value': False}
+    stars_visible = {'value': True}
+
+    # --- Use new GUI controls ---
+    gui_controls = PygameGUIControls(sim, viewport, paused, stars_visible)
 
     screen.fill((0, 0, 0))
-  
+    
+    video_writer = None  # Ensure video_writer is always defined
     if output_video:
         pygame.display.update()  # force display to assume actual size
         video_writer = cv.VideoWriter(output_video, cv.VideoWriter_fourcc(*'DIVX'), 30, screen.get_size())
@@ -139,25 +146,25 @@ def main(output_video):
     month = 11
     week = 44
     
-
     dragging = False
     drag_start_pos = None 
-    paused = False 
-    stars_visible = True  # Toggle for star field
+
+    clock = pygame.time.Clock()
 
     while True:
+        time_delta = clock.tick(60) / 1000.0
         t_start = time.time()
 
         # Draw star field background if enabled
         screen.fill((0, 0, 0))
-        if stars_visible:
+        if stars_visible['value']:
             for x, y, brightness, size in star_field:
                 color = (brightness, brightness, brightness)
                 pygame.draw.circle(screen, color, (x, y), int(size))
 
         bodies_surface.fill((0, 0, 0, 0))
 
-          # Clear orbit surface only when zoom changes
+        # Clear orbit surface only when zoom changes
         if viewport.zoom_changed:
             orbits_surface.fill((0, 0, 0, 0))
             # Redraw all existing trail points at new zoom level
@@ -207,10 +214,11 @@ def main(output_video):
         screen.blit(orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f} | Stars: {'ON' if stars_visible else 'OFF'}", True, (255, 255, 255))
-        #controls_text = font.render("Controls: +/- to zoom, R to reset, P to pause, S to screenshot, Q to quit, Drag to pan", True, (255, 255, 255))
+        # --- GUI draw ---
+        gui_controls.draw_ui(screen)
+
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f} | Stars: {'ON' if stars_visible['value'] else 'OFF'}", True, (255, 255, 255))
         screen.blit(zoom_text, (10, 10))
-        #screen.blit(controls_text, (10, 50))
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
@@ -228,10 +236,9 @@ def main(output_video):
         if output_video:
             video_writer.write(image_from_screen(screen))
 
-        if not paused:
+        if not paused['value']:
             sim.iterate() #sim step one at a time
-
-            t_delta = time.time() - t_start    #frame rate contrpl
+            t_delta = time.time() - t_start    #frame rate control
             if t_delta < delay:
                 time.sleep(delay - t_delta)
 
@@ -241,9 +248,11 @@ def main(output_video):
                     video_writer.release()
                 pygame.quit()
                 quit()
-            elif event.type == pygame.KEYDOWN:
+            # --- GUI event handling ---
+            gui_controls.process_events(event, screen, save_screenshot, output_video, video_writer)
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    paused = not paused
+                    paused['value'] = not paused['value']
                 elif event.key == pygame.K_s:
                     save_screenshot(screen, sim.t)
                 elif event.key == pygame.K_q:
@@ -252,7 +261,7 @@ def main(output_video):
                     pygame.quit()
                     quit()
                 elif event.key == pygame.K_t:
-                    stars_visible = not stars_visible
+                    stars_visible['value'] = not stars_visible['value']
                 elif event.key == pygame.K_PLUS:
                     viewport.zoom_in()
                 elif event.key == pygame.K_MINUS:
@@ -280,9 +289,7 @@ def main(output_video):
                     dy = current_pos[1] - drag_start_pos[1]
                     viewport.pan(dx, dy)
                     drag_start_pos = current_pos
-
-        
-
+        gui_controls.update(time_delta)
 
 def save_screenshot(screen, t):
     image = image_from_screen(screen)
