@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 import rebound
 
+
 @dataclass
 class Body:
     name: str
@@ -80,10 +81,11 @@ class Simulation:
             e=0.3,             
             inc=np.radians(15),  # Inclined orbit — orbit not in same plane
             Omega=np.radians(80), omega=np.radians(60), f=np.radians(10))
+        
 
         self.sim.move_to_com()
         self.t = 0  # (40000*np.pi)
-        self.delta_t = (14 * np.pi) # 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
+        self.delta_t = (14 * np.pi) / 100# 7 * 2pi  - 7 revolutions of eath/s - 7 * fps years/s = 28e1 yrs/s
         print(self.delta_t)
 
 
