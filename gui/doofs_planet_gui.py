@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 import numpy as np
-from doofs_planet_state import doofs_planet_state
+from gui.doofs_planet_state import doofs_planet_state
 
 def show_doofs_planet_gui():
     dpg.create_context()

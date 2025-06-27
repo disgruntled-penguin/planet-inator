@@ -11,6 +11,7 @@ import random
 
 
 WIDTH = 1000
+#WIDTH = 1450
 HEIGHT = 1000
 INITIAL_VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
 MIN_ZOOM = 0.1  
