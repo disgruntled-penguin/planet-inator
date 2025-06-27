@@ -185,11 +185,23 @@ def main(output_video):
 
 
     #time to render the celestial balls :p
-        for body in sim.bodies:
+        for i, body in enumerate(sim.bodies):
          position = viewport_to_pixels(body.x - sim.bodies[0].x, body.y - sim.bodies[0].y) #distance relative to mc (sun)
          if position:
                 size = max((body.size * WIDTH) / (viewport.half_size * 2), 5) #change this
-                #pygame.draw.circle(orbits_surface, body.color, position, 1)
+                #sun gelow
+                if i == 0:
+                    glow_color = (255, 240, 180)
+                    max_glow_radius = size * 4
+                    steps = 100
+                    for step in range(steps):
+                        r = int(size + (max_glow_radius - size) * (step / steps))
+                        alpha = int(3 * (1 - (step / steps)))  # Lower max alpha for less brightness
+                        if alpha <= 0:
+                            continue
+                        glow_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                        pygame.draw.circle(glow_surf, (*glow_color, alpha), (int(position[0]), int(position[1])), r)
+                        bodies_surface.blit(glow_surf, (0, 0))
                 pygame.draw.circle(bodies_surface, body.color, position, size)
             
         screen.blit(orbits_surface, (0, 0))  #dahes 
