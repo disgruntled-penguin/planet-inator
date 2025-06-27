@@ -1,12 +1,13 @@
+
 import time
-from reboundsim import Simulation
+from rebound.sim import Simulation
 import pygame
 import cv2 as cv
 import click
 import math
 import numpy as np
 import random
-from gui.triggers import PygameGUIControls
+from gui.controllers import PygameGUIControls
 
 
 
@@ -176,6 +177,10 @@ def main(output_video):
                         pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
             viewport.zoom_changed = False
 
+        if sim.t == 0:
+            orbits_surface.fill((0, 0, 0, 0))
+            orbit_trail.trails.clear()
+        
         # Add current positions to orbit trails and draw new trail points
         for i, body in enumerate(sim.bodies):
             current_pos = (body.x - sim.bodies[0].x, body.y - sim.bodies[0].y)
@@ -203,7 +208,7 @@ def main(output_video):
                     steps = 100
                     for step in range(steps):
                         r = int(size + (max_glow_radius - size) * (step / steps))
-                        alpha = int(3 * (1 - (step / steps)))  # Lower max alpha for less brightness
+                        alpha = int(3 * (1 - (step / steps)))  # gatekeeping this
                         if alpha <= 0:
                             continue
                         glow_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -214,7 +219,7 @@ def main(output_video):
         screen.blit(orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
 
-        # --- GUI draw ---
+        # 
         gui_controls.draw_ui(screen)
 
         zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f} | Stars: {'ON' if stars_visible['value'] else 'OFF'}", True, (255, 255, 255))
@@ -222,7 +227,7 @@ def main(output_video):
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
-        #logging
+        #logging my beloved
         '''if get_time(sim.t) > log_t: 
             print(f't={get_time(sim.t):.2f}, month {int((week-1)/4.3)+1:2d}, week {week:2d}: {sun_distance}')
             log_t += 1/52
@@ -248,7 +253,7 @@ def main(output_video):
                     video_writer.release()
                 pygame.quit()
                 quit()
-            # --- GUI event handling ---
+            # gui starts here (hell)
             gui_controls.process_events(event, screen, save_screenshot, output_video, video_writer)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
@@ -324,6 +329,7 @@ def calculate_dist(body1, body2):
 
 if __name__ == '__main__':
     main()
+
 
 
 
