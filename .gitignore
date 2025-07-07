@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# MacOS system files
+.DS_Store
+
+# Model files
+*.torch
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Image outputs
+*.png
