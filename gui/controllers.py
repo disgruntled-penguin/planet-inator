@@ -1,5 +1,6 @@
 import pygame
 import pygame_gui as pg
+
 import numpy as np
 
 class PygameGUIControls:
@@ -17,17 +18,18 @@ class PygameGUIControls:
         # Panel
         #self.manager.set_theme(pg.themes.THEME_DARK)
         self.manager = pg.UIManager((800, 600), 'gui/theme.json')
-        self.panel = pg.elements.UIPanel(relative_rect=pygame.Rect((10, 60), (250, 200)), manager=self.manager)
+       # self.controls = pg.elements.UIDropDownMenu(relative_rect=pygame.Rect(200, 100, 200, 30), manager=self.manager, options_list=['Pause', 'Trev', 'Bob'],starting_option='Pause')
+        self.panel = pg.elements.UIPanel(relative_rect=pygame.Rect((0, 0), (250, 200)), manager=self.manager)
         # Dropdown toggle button
-        self.dropdown_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 0), (230, 25)), text='▼ Controls', manager=self.manager, container=self.panel)
+        self.dropdown_button = pg.elements.UIButton(relative_rect=pygame.Rect((50, 0), (100, 15)), text='▼ Controls', manager=self.manager, container=self.panel)
         # Buttons
-        self.pause_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 30), (100, 30)), text='Pause', manager=self.manager, container=self.panel)
-        self.zoom_in_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 70), (100, 30)), text='Zoom In', manager=self.manager, container=self.panel)
-        self.zoom_out_button = pg.elements.UIButton(relative_rect=pygame.Rect((120, 70), (100, 30)), text='Zoom Out', manager=self.manager, container=self.panel)
-        self.reset_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 110), (100, 30)), text='Reset', manager=self.manager, container=self.panel)
-        self.stars_button = pg.elements.UIButton(relative_rect=pygame.Rect((120, 110), (100, 30)), text='Toggle Stars', manager=self.manager, container=self.panel)
-        self.screenshot_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 150), (100, 30)), text='Screenshot', manager=self.manager, container=self.panel)
-        self.quit_button = pg.elements.UIButton(relative_rect=pygame.Rect((120, 150), (100, 30)), text='Quit', manager=self.manager, container=self.panel)
+        self.pause_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 30), (200, 30)), text='Pause (P)', manager=self.manager, container=self.panel)
+        self.zoom_in_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 50), (200, 30)), text='Zoom In (+ or Scroll down)', manager=self.manager, container=self.panel)
+        self.zoom_out_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 70), (200, 30)), text='Zoom Out (- or Scroll up)', manager=self.manager, container=self.panel)
+        self.reset_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 90), (200, 30)), text='Reset (R)', manager=self.manager, container=self.panel)
+        self.stars_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 110), (200, 30)), text='Toggle Stars (T)', manager=self.manager, container=self.panel)
+        self.screenshot_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 130), (200, 30)), text='Screenshot (S)', manager=self.manager, container=self.panel)
+        self.quit_button = pg.elements.UIButton(relative_rect=pygame.Rect((0, 150), (200, 30)), text='Quit (Q)', manager=self.manager, container=self.panel)
         
 
         # Input fields for Doof’s parameters
@@ -50,11 +52,11 @@ class PygameGUIControls:
         self.mass_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 130), (100, 30)), manager=self.manager, container=self.param_panel)
         self.mass_input.set_text("400")
         self.mass_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 130), (100, 30)), text="mass (×m⊕)", manager=self.manager, container=self.param_panel)
-
-        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 170), (200, 30)), text="Update Doof", manager=self.manager, container=self.param_panel)
         
 
-        self._set_panel_visibility(True)
+        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 170), (200, 30)), text="Update Doof", manager=self.manager, container=self.param_panel)
+
+        self._set_panel_visibility(False)
         
 
       
@@ -68,13 +70,13 @@ class PygameGUIControls:
            field.visible = visible
         # Resize panel
         if visible:
-            self.panel.set_relative_position((10, 60))
-            self.panel.set_dimensions((250, 200))
-            self.dropdown_button.set_text('hide menu')
+            self.panel.set_relative_position((10, 10))
+            self.panel.set_dimensions((250, 210))
+            self.dropdown_button.set_text('hide controls')
         else:
-            self.panel.set_relative_position((10, 60))
-            self.panel.set_dimensions((250, 35))
-            self.dropdown_button.set_text('show menu')
+            self.panel.set_relative_position((10, 10))
+            self.panel.set_dimensions((250, 20))
+            self.dropdown_button.set_text('controls')
 
     def draw_ui(self, screen):
         self.manager.draw_ui(screen)
@@ -112,7 +114,7 @@ class PygameGUIControls:
                             "a": a,
                             "e": e,
                             "inc": np.radians(inc_deg),
-                            "m": m * (1 / 333000)  # Earth mass to Solar mass
+                            "m": m * (1 / 333000),  # Earth mass to Solar mass
                         }
 
                         self.sim.update_doof_params(new_params)
