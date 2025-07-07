@@ -12,9 +12,9 @@ from gui.controllers import PygameGUIControls
 
 
 
-WIDTH = 1000
+WIDTH = 1300
 #WIDTH = 1450
-HEIGHT = 1000
+HEIGHT = 850
 INITIAL_VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
 MIN_ZOOM = 0.1  
 MAX_ZOOM = 100 
@@ -126,7 +126,8 @@ def main(output_video):
     orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface.set_colorkey((0, 0, 0))
-    font = pygame.font.Font('freesansbold.ttf', 16)
+    font = pygame.font.Font('freesansbold.ttf', 13)
+    font1 = pygame.font.Font('freesansbold.ttf', 20)
 
     # State references for GUI
     paused = {'value': False}
@@ -222,8 +223,10 @@ def main(output_video):
         # 
         gui_controls.draw_ui(screen)
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x (Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}) (Half-size: {viewport.half_size:.2f}), no of years passsed= {get_time(sim.t):.0f} | Stars: {'ON' if stars_visible['value'] else 'OFF'}", True, (255, 255, 255))
-        screen.blit(zoom_text, (10, 10))
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} \n", True, (255, 255, 255))
+        years_text = font1.render(f"no of years passed: {get_time(sim.t):.0f}", True, (255, 255, 255))
+        screen.blit(zoom_text, (1200, 10))
+        screen.blit(years_text, (10, 800))
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
