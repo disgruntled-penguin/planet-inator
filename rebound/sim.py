@@ -46,7 +46,7 @@ class Simulation:
         
         self.sim.move_to_com()
         self.t = 0
-        self.delta_t = (14 * np.pi) / 100 # speed, 2*pi would mean 1 yr/sec but fps is 40 so *40 yrs
+        self.delta_t = (14 * np.pi) / (40*7) # 1 yr/sec # speed, 2*pi would mean 1 yr/sec but fps is 40 so *40 yrs
 
     def _init_bodies(self):
         # Reset rebound sim and bodies list
