@@ -1,4 +1,3 @@
-
 import time
 from rebound.sim import Simulation
 import pygame
