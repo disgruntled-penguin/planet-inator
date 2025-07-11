@@ -26,7 +26,7 @@ class Simulation:
             "size":  0.07,
             "color": "purple",
             "m":     400 * m_earth,
-            "a":     8,
+            "a":     3.3,
             "e":     0.3,
             "inc":   np.radians(15),
             "Omega": np.radians(80),
