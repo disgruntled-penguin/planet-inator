@@ -92,6 +92,7 @@ class PygameGUIControls:
             self.panel.set_relative_position((10, 10))
             self.panel.set_dimensions((250, 210))
             self.dropdown_button.set_text('hide controls')
+            
         else:
             self.panel.set_relative_position((10, 10))
             self.panel.set_dimensions((250, 20))
@@ -163,7 +164,12 @@ class PygameGUIControls:
                         }
 
                         self.sim.update_doof_params(new_params)
-                        print("[✓] Doof's Planet updated.")
+                        
+                        # Update button text to show planet has been created
+                        if self.sim.doof_planet_created:
+                            self.doof_submit.set_text("Update Doof's Planet")
+                        
+                        print("[✓] Doof's Planet created/updated.")
                     except ValueError:
                         print("[!] Invalid input for Doof's Planet update.")
 
@@ -193,65 +199,6 @@ class PygameGUIControls:
                     self.speed_value_label.set_text(f"{speed_multiplier:.1f}yrs/sec")
                     print(f"[debug] Speed updated via arrow to {speed_multiplier:.1f}x")
                 
-                if event.ui_element == self.dropdown_button:
-                    self.panel_collapsed = not self.panel_collapsed
-                    self._set_panel_visibility(not self.panel_collapsed)
-                elif event.ui_element == self.dropdown_param_button:
-                    self.param_panel_collapsed = not self.param_panel_collapsed
-                    self._set_param_panel_visibility(not self.param_panel_collapsed)
-                elif not self.panel_collapsed:
-                    if event.ui_element == self.pause_button:
-                        self.paused_ref['value'] = not self.paused_ref['value']
-                        self.pause_button.set_text('Resume' if self.paused_ref['value'] else 'Pause')
-                    elif event.ui_element == self.zoom_in_button:
-                        self.viewport.zoom_in()
-                    elif event.ui_element == self.zoom_out_button:
-                        self.viewport.zoom_out()
-                    elif event.ui_element == self.reset_button:
-                        self.viewport.reset_zoom()
-                    elif event.ui_element == self.stars_button:
-                        self.stars_visible_ref['value'] = not self.stars_visible_ref['value']
-                    elif event.ui_element == self.screenshot_button:
-                        save_screenshot(screen, self.sim.t)
-                    elif event.ui_element == self.quit_button:
-                        if output_video:
-                            video_writer.release()
-                        pygame.quit()
-                        quit()
-                        
-                if event.ui_element == self.doof_submit:
-                    try:
-                        print("[debug] Submit button pressed.")
-
-                        
-                        a = float(self.a_input.get_text())
-                        e = float(self.e_input.get_text())
-                        inc_deg = float(self.inc_input.get_text())
-                        m = float(self.mass_input.get_text())
-
-                        new_params = {
-                            "a": a,
-                            "e": e,
-                            "inc": np.radians(inc_deg),
-                            "m": m * (1 / 333000),  # Earth mass to Solar mass
-                        }
-
-                        self.sim.update_doof_params(new_params)
-                        print("[✓] Doof's Planet updated.")
-                    except ValueError:
-                        print("[!] Invalid input for Doof's Planet update.")
-            
-            # debugging
-            elif event.user_type in [pg.UI_BUTTON_START_PRESS]:
-                print(f"[debug] Button start press: {event.user_type} on {event.ui_element}")
-                
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            print(f"[debug] Mouse button down at {event.pos}")
-        elif event.type == pygame.MOUSEBUTTONUP:
-            print(f"[debug] Mouse button up at {event.pos}")
-        elif event.type == pygame.MOUSEMOTION:
-            if event.buttons[0]:  
-                print(f"[debug] Mouse drag to {event.pos}")
 
     def update(self, time_delta):
         self.manager.update(time_delta)
