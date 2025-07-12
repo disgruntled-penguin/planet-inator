@@ -34,18 +34,16 @@ class Simulation:
             "f":     np.radians(10)
         }
 
-        # Track whether Doof's planet has been created
+        # visibility
         self.doof_planet_created = False
         
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
         self.sim.dt = 0.1
 
-       
         self.bodies = []
         self._init_bodies()
 
-        
         self.sim.move_to_com()
         self.t = 0
         self.delta_t = (14 * np.pi) / (40*7) # 1 yr/sec # speed, 2*pi would mean 1 yr/sec but fps is 40 so *40 yrs
@@ -90,7 +88,7 @@ class Simulation:
         if self.doof_planet_created:
             self.add(**self.doof_params)
 
-        # thank you chatgpt for debug
+        # Debug output
         print("[debug] Bodies in sim:", [b.name for b in self.bodies])
 
     def add(self, name='noname', size=10, color='black', **kwargs):
@@ -102,7 +100,7 @@ class Simulation:
         self.bodies.append(body)
 
     def create_doof_planet(self):
-        """Create Doof's planet for the first time"""
+     
         if not self.doof_planet_created:
             self.doof_planet_created = True
             # Add the planet to the current simulation
@@ -113,6 +111,7 @@ class Simulation:
             print("[debug] Doof's planet already exists!")
 
     def update_doof_params(self, new_params):
+        #trigger spock prediction
         # Update stored parameters
         for key, val in new_params.items():
             if key in self.doof_params:
@@ -127,12 +126,54 @@ class Simulation:
             self.sim.move_to_com()
             # Reset time
             self.t = 0
-            print("[debug] Doof updated to:", self.doof_params)
+            print("[debug] Doof's planet updated with new parameters:", self.doof_params)
+
+    def get_spock_ready_simulation(self):
+        
+        sim_copy = self.sim.copy()
+        
+        sim_copy.move_to_com()
+        
+       
+        sim_copy.integrator = "whfast"
+        sim_copy.dt = 0.1
+        
+        print(f"spock simulation with {sim_copy.N} particles")
+        return sim_copy
 
     def iterate(self):
-        self.sim.integrate(self.t)
+        self.sim.integrate(self.t) #sim one step at a time
         self.t += self.delta_t
 
 if __name__ == '__main__':
     sim = Simulation()
-    sim.iterate()
+    
+    # Test SPOCK integration
+    print("Testing SPOCK integration...")
+    
+    # Create Doof's planet
+    sim.create_doof_planet()
+    
+    # Test parameters update
+    test_params = {
+        "a": 2.5,
+        "e": 0.1,
+        "inc": np.radians(10),
+        "m": 200 * (1 / 332946.0487)
+    }
+    
+    sim.update_doof_params(test_params)
+    
+    
+    spock_sim = sim.get_spock_ready_simulation()
+    
+    print(f"Simulation ready for SPOCK with {spock_sim.N} bodies")
+    print("Integration test...")
+    
+    # Run a few iterations
+    for i in range(10):
+        sim.iterate()
+        if i % 3 == 0:
+            print(f"Iteration {i}: t = {sim.t:.3f}")
+    
+    print("Simulation test complete!")
