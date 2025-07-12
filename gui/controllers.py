@@ -43,24 +43,24 @@ class PygameGUIControls:
 
         self.a_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 30), (100, 30)), manager=self.manager, container=self.param_panel)
         self.a_input.set_text("3.3")
-        self.a_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 30), (100, 30)), text="(AU)", manager=self.manager, container=self.param_panel)
+        self.a_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 30), (100, 30)), text="Distance from Sun (AU)", manager=self.manager, container=self.param_panel)
 
         self.e_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 70), (100, 30)), manager=self.manager, container=self.param_panel)
         self.e_input.set_text("0.3")
-        self.e_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 70), (100, 30)), text="ecc", manager=self.manager, container=self.param_panel)
+        self.e_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 70), (100, 30)), text="eccentricity", manager=self.manager, container=self.param_panel)
 
         self.inc_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 110), (100, 30)), manager=self.manager, container=self.param_panel)
         self.inc_input.set_text("15")
-        self.inc_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 110), (100, 30)), text="inc (°)", manager=self.manager, container=self.param_panel)
+        self.inc_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 110), (100, 30)), text="inclination (°)", manager=self.manager, container=self.param_panel)
 
         self.mass_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 150), (100, 30)), manager=self.manager, container=self.param_panel)
         self.mass_input.set_text("400")
-        self.mass_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 150), (100, 30)), text="mass (×m⊕)", manager=self.manager, container=self.param_panel)
+        self.mass_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 150), (100, 30)), text="mass (number of earth masses)", manager=self.manager, container=self.param_panel)
         
 
-        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 180), (200, 30)), text="Update Doof", manager=self.manager, container=self.param_panel)
+        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 180), (200, 30)), text="Create Doof's Planet", manager=self.manager, container=self.param_panel)
         # Speed control slider - try without panel first to test visibility
-        self.speed_label = pg.elements.UILabel(relative_rect=pygame.Rect((500, 400), (80, 30)), text="Speed:", manager=self.manager)
+        #self.speed_label = pg.elements.UILabel(relative_rect=pygame.Rect((500, 400), (80, 30)), text="Speed:", manager=self.manager)
         
         self.speed_slider = pg.elements.UIHorizontalSlider(
             relative_rect=pygame.Rect((550, 780), (100, 50)),
@@ -105,11 +105,11 @@ class PygameGUIControls:
         if visible:
             self.param_panel.set_relative_position((1000, 580))
             self.param_panel.set_dimensions((250, 210))
-            self.dropdown_param_button.set_text('hide parameters')
+            self.dropdown_param_button.set_text('hide')
         else:
-            self.param_panel.set_relative_position((1000, 780))
+            self.param_panel.set_relative_position((1000, 790))
             self.param_panel.set_dimensions((250, 20))
-            self.dropdown_param_button.set_text('Doof Parameters')
+            self.dropdown_param_button.set_text('Planet-Inator')
 
     def draw_ui(self, screen):
         self.manager.draw_ui(screen)
