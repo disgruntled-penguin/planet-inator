@@ -1,11 +1,11 @@
 <img src = moments/year_t_42161_0.png width="400" height="400">
 
 
-# 🪐 Planet-Inator: Simulate Orbital Chaos
+<!--# 🪐 Planet-Inator: Simulate Orbital Chaos
 
-<!-->> *"Curse you, Doofenshmirtz! You broke the Solar System!"*-->
+>> *"Curse you, Doofenshmirtz! You broke the Solar System!"*
 
-<!--Planet-Inator is a real-time, interactive orbital simulator that lets users introduce a new planet — **Doof’s Planet** — into the early Solar System and visualize how it destabilizes or survives across billions of years.
+Planet-Inator is a real-time, interactive orbital simulator that lets users introduce a new planet — **Doof’s Planet** — into the early Solar System and visualize how it destabilizes or survives across billions of years.
 
 
 ---
