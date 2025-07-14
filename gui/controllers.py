@@ -4,6 +4,7 @@ import numpy as np
 import time
 import threading
 from queue import Queue
+from spock import DeepRegressor
 
 class PygameGUIControls:
     def __init__(self, sim, viewport, paused_ref, stars_visible_ref):
@@ -115,12 +116,12 @@ class PygameGUIControls:
         
         # Doof's message in the bubble
         bubble_text = """
-        <font color='#FFD700'><b>Hi this is Dr. Doofenshmirtz:</b></font><br>
-        <font color='#CCCCCC'> EARTH is not my home anymore, Look at this perfectly stable solar system,</font><br>
-        <font color='#CCCCCC'> Creating My own planet shouldnt hurt because its sooo stable</font><br>
-        <font color='#CCCCCC'> Youre gonna help me create one with the help of this...</font><br><br>
-        <font color='#FFFFFF'>"Behold! My <b>PLANET-INATOR</b>!"</font><br><br>
-        <font color='#AAAAAA'>Press ESC to dismiss</font>
+        <font color='#FFD700'><b>I present to you, My Planet-Inator!</b></font><br>
+        <font color='#CCCCCC'>Im the evil Scientist, Dr.Doofenshmirtz, I need to set up my HQ inanother planet  so that perrry the platypus wont be able to reach me </font><br>
+        <font color='#CCCCCC'>And, creating another planet shouldnt be a problem, since our solar system has been stable for so long</font><br>
+        <font color='#CCCCCC'> Right? </font><br><br>
+        <font color='#FFFFFF'>Try it out!</font><br><br>
+        <font color='#AAAAAA'>Press anywhere to dismiss</font>
         """
         
         self.intro_bubble_text = pg.elements.UITextBox(
@@ -173,13 +174,10 @@ class PygameGUIControls:
         try:
             print("[log] Starting SPOCK stability prediction...")
             
-
-            from spock import DeepRegressor
-            
             deep_model = DeepRegressor()
             
             median, lower, upper, samples = deep_model.predict_instability_time(
-                sim_copy, samples=10000, return_samples=True, seed=0
+                sim_copy, samples=5000, return_samples=True, seed=0
             )
             
             #  88 days is mercuries duration
