@@ -336,7 +336,7 @@ class GiantImpactPhaseBaseline():
                 except Exception as e:
                     warnings.warn('Removing planet with unphysical orbital elements')
                 new_state_sim.move_to_com()
-                print(f'new system after ejection/stabilising object at {hex(sims)}, N = {a2s} t = {delta.t}')
+               # print(f'new system after ejection/stabilising object at {hex(sims)}, N = {a2s} t = {delta.t}')
                 
                 for p in new_state_sim.particles[:new_state_sim.N]:
                     p.x, p.y, p.z = npEulerAnglesTransform(p.xyz, -trio_sims[k].theta1, -trio_sims[k].theta2, 0)
