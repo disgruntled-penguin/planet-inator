@@ -147,14 +147,12 @@ class Simulation:
 
 if __name__ == '__main__':
     sim = Simulation()
-    
-    # Test SPOCK integration
+   
     print("Testing SPOCK integration...")
     
-    # Create Doof's planet
+   
     sim.create_doof_planet()
-    
-    # Test parameters update
+   
     test_params = {
         "a": 2.5,
         "e": 0.1,
