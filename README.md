@@ -1,7 +1,7 @@
 <!--<img src = moments/year_t_42161_0.png width="400" height="400">-->
 
 <img src = moments/ui.png width="650" height="425">
-<img src = finish/ui.png width="650" height="425">
+<img src = moments/finish.png width="650" height="425">
 
 
 <!--# 🪐 Planet-Inator: Simulate Orbital Chaos
