@@ -1,5 +1,7 @@
 doofs planet onyl when launched - check
-add gui functions
-add spock
-add prompt to go faster
-pause
+add gui functions - check
+add spock - check
+add prompt to go faster - nope
+pause - nope
+
+
