@@ -11,5 +11,5 @@ __pycache__/
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Image outputs
-*.png
+
+/rebound/tasks.md
