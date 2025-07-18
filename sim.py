@@ -1,6 +1,8 @@
 import numpy as np
 import rebound
 from dataclasses import dataclass
+from nea import NEALoader  # Import our NEA loader
+from typing import Dict, Optional
 
 @dataclass
 class Body:
@@ -36,17 +38,19 @@ class Simulation:
 
         # visibility
         self.doof_planet_created = False
+        self.asteroids_added = False
         
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
         self.sim.dt = 0.1
 
         self.bodies = []
+        self.nea_loader = None  # Will hold our NEA loader
         self._init_bodies()
 
         self.sim.move_to_com()
         self.t = 0
-        self.delta_t = (14 * np.pi) / (40*7) # 1 yr/sec # speed, 2*pi would mean 1 yr/sec but fps is 40 so *40 yrs
+        self.delta_t = (14 * np.pi) / (40*7) # 1 yr/sec
 
     def _init_bodies(self):
         # Reset rebound sim and bodies list
@@ -99,8 +103,41 @@ class Simulation:
         body = Body(name=name, size=size, color=color, particle=particle)
         self.bodies.append(body)
 
+    def load_nea_data(self, json_file_path: str, limit: Optional[int] = 1000):
+        """Load NEA data from JSON file"""
+        self.nea_loader = NEALoader(json_file_path)
+        return self.nea_loader.load_asteroids(limit=limit)
+
+    def add_asteroids(self, max_count: int = 50, filter_params: Optional[Dict] = None, interesting_only: bool = False):
+        """Add asteroids to the simulation"""
+        
+        if not self.nea_loader or not self.nea_loader.loaded:
+            print("Error: NEA data not loaded. Call load_nea_data() first.")
+            return
+        
+        # Get filtered asteroids
+        if interesting_only:
+            selected_asteroids = self.nea_loader.get_interesting_asteroids(max_count)
+        else:
+            filter_params = filter_params or {}
+            selected_asteroids = self.nea_loader.filter_asteroids(max_count=max_count, **filter_params)
+        
+        # Convert and add each asteroid
+        added_count = 0
+        for asteroid_data in selected_asteroids:
+            try:
+                asteroid_params = self.nea_loader.convert_to_rebound_params(asteroid_data)
+                self.add(**asteroid_params)
+                added_count += 1
+            except Exception as e:
+                print(f"Error adding asteroid {asteroid_data.get('Name', 'Unknown')}: {e}")
+                continue
+        
+        print(f"Successfully added {added_count} asteroids to simulation")
+        self.asteroids_added = True
+        self.sim.move_to_com()
+
     def create_doof_planet(self):
-     
         if not self.doof_planet_created:
             self.doof_planet_created = True
             # Add the planet to the current simulation
@@ -111,7 +148,6 @@ class Simulation:
             print("[debug] Doof's planet already exists!")
 
     def update_doof_params(self, new_params):
-        #trigger spock prediction
         # Update stored parameters
         for key, val in new_params.items():
             if key in self.doof_params:
@@ -129,15 +165,10 @@ class Simulation:
             print("[debug] Doof's planet updated with new parameters:", self.doof_params)
 
     def get_spock_ready_simulation(self):
-        
         sim_copy = self.sim.copy()
-        
         sim_copy.move_to_com()
-        
-       
         sim_copy.integrator = "whfast"
         sim_copy.dt = 0.1
-        
         print(f"spock simulation with {sim_copy.N} particles")
         return sim_copy
 
@@ -145,33 +176,47 @@ class Simulation:
         self.sim.integrate(self.t) #sim one step at a time
         self.t += self.delta_t
 
+    def get_simulation_stats(self):
+        """Get statistics about the current simulation"""
+        stats = {
+            'total_bodies': len(self.bodies),
+            'current_time': self.t,
+            'has_doof_planet': self.doof_planet_created,
+            'has_asteroids': self.asteroids_added
+        }
+        return stats
+
 if __name__ == '__main__':
     sim = Simulation()
-   
-    print("Testing SPOCK integration...")
     
-   
-    sim.create_doof_planet()
-   
-    test_params = {
-        "a": 2.5,
-        "e": 0.1,
-        "inc": np.radians(10),
-        "m": 200 * (1 / 332946.0487)
-    }
+    # Example usage with NEA data
+    print("Testing NEA integration...")
     
-    sim.update_doof_params(test_params)
+    # Load NEA data (replace with your actual file path)
+    nea_file = "nea_extended.json"  # Replace with your JSON file path
     
-    
-    spock_sim = sim.get_spock_ready_simulation()
-    
-    print(f"Simulation ready for SPOCK with {spock_sim.N} bodies")
-    print("Integration test...")
-    
-    # Run a few iterations
-    for i in range(10):
-        sim.iterate()
-        if i % 3 == 0:
-            print(f"Iteration {i}: t = {sim.t:.3f}")
+    try:
+        loaded_count = sim.load_nea_data(nea_file, limit=500)  # Load first 500 asteroids
+        print(f"Loaded {loaded_count} asteroids")
+        
+        # Add some interesting asteroids
+        sim.add_asteroids(max_count=20, interesting_only=True)
+        
+        # Create Doof's planet
+        sim.create_doof_planet()
+        
+        # Print stats
+        stats = sim.get_simulation_stats()
+        print("Simulation stats:", stats)
+        
+        # Run simulation
+        for i in range(10):
+            sim.iterate()
+            if i % 3 == 0:
+                print(f"Iteration {i}: t = {sim.t:.3f}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        print("Make sure to update 'nea_file' with your actual JSON file path")
     
     print("Simulation test complete!")

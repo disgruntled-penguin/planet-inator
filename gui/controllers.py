@@ -410,10 +410,10 @@ class PygameGUIControls:
                         # Start stability prediction
                         self._start_stability_prediction()
                         
-                        print("[✓] Doof's diabolical planet has been created!")
+                        print("[log] Doof's  planet has been created!")
                     except ValueError:
                         print("[!] Invalid input for Planet-inator!")
-                        self.doof_submit.set_text("❌ Invalid Parameters!")
+                        self.doof_submit.set_text(" Invalid Parameters!")
 
             elif event.user_type == pg.UI_HORIZONTAL_SLIDER_MOVED:
                 if event.ui_element == self.speed_slider:
