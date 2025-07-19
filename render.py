@@ -95,10 +95,26 @@ class OrbitTrail:
     
     def get_trail(self, body_id):
         return self.trails.get(body_id, [])
+    
+class AsteroidTrail:
+    def __init__(self):
+        self.trails = {}  # body_id -> (x, y)
+    
+    def add_position(self, body_id, x, y):
+        if body_id not in self.trails:
+            self.trails[body_id] = []
+        
+        self.trails[body_id].append((x, y))
+        # no fade
+    
+    def get_trail(self, body_id):
+        return self.trails.get(body_id, [])
+
 
 # Global viewport instance
 viewport = Zwoom(INITIAL_VIEWPORT_HALF_SIZE)
 orbit_trail = OrbitTrail()
+asteroid_orbit_trail = AsteroidTrail()
 def viewport_to_pixels(x, y):
     current_viewport = viewport.get_viewport()
     viewport_width = viewport.get_viewport_width()
@@ -116,21 +132,30 @@ def viewport_to_pixels(x, y):
 
 @click.command()
 @click.option('--output_video', '-v', default='', help='Filename of video to write to')
-def main(output_video):
+@click.option('--asteroids', '-a', default=50, help='Number of asteroids to load')
+def main(output_video, asteroids):
     sim = Simulation()
+    
+    # Load asteroids if requested
+    if asteroids > 0:
+        print(f"Loading {asteroids} asteroids...")
+        sim.load_asteroids(count=asteroids)
 
     pygame.init()
 
     screen = pygame.display.set_mode(SIZE)
+    asteroid_orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
     bodies_surface.set_colorkey((0, 0, 0))
     font = pygame.font.Font('freesansbold.ttf', 13)
     font1 = pygame.font.Font('freesansbold.ttf', 20)
+    font_small = pygame.font.Font('freesansbold.ttf', 10)
 
     # State references for GUI
     paused = {'value': False}
     stars_visible = {'value': True}
+  
 
     # --- Use new GUI controls ---
     gui_controls = PygameGUIControls(sim, viewport, paused, stars_visible)
@@ -168,18 +193,40 @@ def main(output_video):
         # Clear orbit surface only when zoom changes
         if viewport.zoom_changed:
             orbits_surface.fill((0, 0, 0, 0))
+            asteroid_orbits_surface.fill((0,0,0,0))
             # Redraw all existing trail points at new zoom level
+            for k, asteroid in enumerate(sim.asteroids):
+                trail_positions = asteroid_orbit_trail.get_trail(k)
+                for trail_x, trail_y in trail_positions:
+                    trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
+                    if trail_pixel_pos:
+                        pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
                 for trail_x, trail_y in trail_positions:
                     trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                     if trail_pixel_pos:
                         pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
+
             viewport.zoom_changed = False
 
         if sim.t == 0:
             orbits_surface.fill((0, 0, 0, 0))
             orbit_trail.trails.clear()
+            asteroid_orbits_surface.fill((0, 0, 0, 0))
+            asteroid_orbit_trail.trails.clear()
+        for k, asteroid in enumerate(sim.asteroids):
+            current_pos = (asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y)
+            
+            # Only add and draw if this is a new position
+            trail_positions = asteroid_orbit_trail.get_trail(k)
+            if not trail_positions or trail_positions[-1] != current_pos:
+                asteroid_orbit_trail.add_position(k, current_pos[0], current_pos[1])
+                
+                # Draw only the new trail point
+                trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
+                if trail_pixel_pos:
+                    pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
         
         # Add current positions to orbit trails and draw new trail points
         for i, body in enumerate(sim.bodies):
@@ -196,11 +243,12 @@ def main(output_video):
                     pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
 
 
+
     #time to render the celestial balls :p
         for i, body in enumerate(sim.bodies):
          position = viewport_to_pixels(body.x - sim.bodies[0].x, body.y - sim.bodies[0].y) #distance relative to mc (sun)
          if position:
-                size = max((body.size * WIDTH) / (viewport.half_size * 2), 5) #change this
+                size = max((body.size * WIDTH) / (viewport.half_size * 2), 3) #change this - minimum size 3 for asteroids
                 #sun gelow
                 if i == 0:
                     glow_color = (255, 240, 180)
@@ -215,17 +263,35 @@ def main(output_video):
                         pygame.draw.circle(glow_surf, (*glow_color, alpha), (int(position[0]), int(position[1])), r)
                         bodies_surface.blit(glow_surf, (0, 0))
                 pygame.draw.circle(bodies_surface, body.color, position, size)
-            
-        screen.blit(orbits_surface, (0, 0))  #dahes 
+
+        for k, asteroid in enumerate(sim.asteroids):
+         position = viewport_to_pixels(asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y) #distance relative to mc (sun)
+         if position:
+                size = max((asteroid.size * WIDTH) / (viewport.half_size * 2), 1) 
+               # print(size)#change this - minimum size 3 for asteroids
+                pygame.draw.circle(bodies_surface, asteroid.color, position, size)
+                
+
+        
+        
+        screen.blit(orbits_surface, (0, 0))
+        screen.blit(asteroid_orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
 
-        # 
+        
         gui_controls.draw_ui(screen)
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} \n", True, (255, 255, 255))
+        # Count asteroids for display
+        num_asteroids = max(0, len(sim.asteroids))  # Total bodies minus Sun and 8 planets
+    
+
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} \nAsteroids: {num_asteroids}", True, (255, 255, 255))
         years_text = font1.render(f"no of years passed: {get_time(sim.t):.0f}", True, (255, 255, 255))
+        controls_text = font_small.render("Controls: N=Show asteroid names, L=Load more asteroids", True, (200, 200, 200))
+        
         screen.blit(zoom_text, (1200, 10))
         screen.blit(years_text, (10, 800))
+        screen.blit(controls_text, (10, 10))
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
@@ -255,7 +321,7 @@ def main(output_video):
                     video_writer.release()
                 pygame.quit()
                 quit()
-            # gui starts here (hell)
+            # gui starts here 
             gui_controls.process_events(event, screen, save_screenshot, output_video, video_writer)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
@@ -331,4 +397,3 @@ def calculate_dist(body1, body2):
 
 if __name__ == '__main__':
     main()
-
