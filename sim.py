@@ -1,6 +1,7 @@
 import numpy as np
 import rebound
 from dataclasses import dataclass
+from neo_loader import NEALoader  # Import your NEA loader
 
 @dataclass
 class Body:
@@ -37,12 +38,19 @@ class Simulation:
         # visibility
         self.doof_planet_created = False
         
+        # Asteroid loading
+        self.nea_loader = NEALoader('nea_extended.json')
+        self.asteroids_loaded = False
+        self.asteroid_count = 400  # Default number of asteroids to load
+        
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
         self.sim.dt = 0.1
 
         self.bodies = []
         self._init_bodies()
+        self.asteroids=[]
+
 
         self.sim.move_to_com()
         self.t = 0
@@ -54,6 +62,7 @@ class Simulation:
         self.sim.integrator = "whfast"
         self.sim.dt = 0.1
         self.bodies = []
+        self.asteroids=[]
 
         m_earth = 1 / 332946.0487
 
@@ -62,7 +71,7 @@ class Simulation:
         self.add(name='Mercury', size=0.015, color='gray', m=0.0553 * m_earth,
                  a=0.387098, e=0.205630, inc=np.radians(7.005),
                  Omega=np.radians(48.331), omega=np.radians(29.124), f=np.radians(174))
-        self.add(name='Venus', size=0.02, color='orange', m=0.815 * m_earth,
+        self.add(name='Venus', size=0.022, color='orange', m=0.815 * m_earth,
                  a=0.723332, e=0.006772, inc=np.radians(3.39458),
                  Omega=np.radians(76.680), omega=np.radians(54.884), f=np.radians(50))
         self.add(name='Earth', size=0.025, color='blue', m=1.0 * m_earth,
@@ -88,8 +97,91 @@ class Simulation:
         if self.doof_planet_created:
             self.add(**self.doof_params)
 
+        # Add asteroids if they have been loaded
+        if self.asteroids_loaded:
+            self._add_asteroids()
+
         # Debug output
         print("[debug] Bodies in sim:", [b.name for b in self.bodies])
+
+    def load_asteroids(self, count=200):
+        """Load asteroids from JSON file and add them to simulation"""
+        try:
+            print(f"Loading {count} asteroids...")
+            self.nea_loader.load_asteroids(limit=5000)  # Load more than we need for filtering
+            
+            # Get interesting asteroids first, then filter for suitable ones
+            loaded_asteroids = self.nea_loader.get_asteroids(count)
+            '''filtered_asteroids = self.nea_loader.filter_asteroids(
+                max_count=count,
+                min_size=1.0,  # H magnitude - lower means bigger 
+                max_size=100.0,  
+                orbit_types=['Amor', 'Apollo', 'Aten', 'Atira'],  # NEA orbit types
+                min_period=0.1,  # orbital period in years
+                max_period=10.0  
+            )'''
+            
+            # Combine interesting and filtered asteroids
+            #combined_asteroids = interesting_asteroids 
+            # Remove duplicates by name
+            seen_names = set()
+            unique_asteroids = []
+            for asteroid in loaded_asteroids:
+                name = asteroid.get('Name', 'Unknown')
+                if name not in seen_names:
+                    seen_names.add(name)
+                    unique_asteroids.append(asteroid)
+            
+            # Take only the requested count
+            self.asteroid_data = unique_asteroids[:count]
+            self.asteroid_count = len(self.asteroid_data)
+            self.asteroids_loaded = True
+            
+            print(f"Successfully loaded {self.asteroid_count} asteroids")
+            
+            # If simulation is already running, reinitialize to include asteroids
+            if len(self.bodies) > 0:
+                print("Reinitializing simulation to include asteroids...")
+                self._init_bodies()
+                self.sim.move_to_com()
+                self.t = 0
+                
+        except Exception as e:
+            print(f"Error loading asteroids: {e}")
+            self.asteroids_loaded = False
+
+    def _add_asteroids(self):
+        """Add loaded asteroids to the simulation"""
+        if not self.asteroids_loaded:
+            return
+            
+        print(f"Adding {len(self.asteroid_data)} asteroids to simulation...")
+        for asteroid_data in self.asteroid_data:
+            try:
+                # Convert asteroid data to rebound parameters
+                params = self.nea_loader.convert_to_rebound_params(asteroid_data)
+                
+                # Scale up the visual size to make asteroids visible
+                # Make them bigger than the original calculation
+                visual_size = max(0.008, params['size'] * 5)  # At least 0.008, scaled up 5x
+                
+                # Add asteroid to simulation
+                self.add_neo(
+                    name=params['name'],
+                    size=visual_size,
+                    color= params['color'], #'aqua',
+                    m=params['m'],
+                    a=params['a'],
+                    e=params['e'],
+                    inc=params['inc'],
+                    Omega=params['Omega'],
+                    omega=params['omega'],
+                    f=params['f']
+                )
+                
+            except Exception as e:
+                print(f"Error adding asteroid {asteroid_data.get('Name', 'Unknown')}: {e}")
+                continue
 
     def add(self, name='noname', size=10, color='black', **kwargs):
         # Add a particle to the simulation and wrap it
@@ -98,6 +190,15 @@ class Simulation:
         particle = self.sim.particles[-1]
         body = Body(name=name, size=size, color=color, particle=particle)
         self.bodies.append(body)
+    
+    def add_neo(self, name='noname', size=10, color='black', **kwargs):
+        # Add a particle to the simulation and wrap it
+        self.sim.add(**kwargs)
+        # rebound.Simulation.add returns None; retrieve the newly added particle
+        particle = self.sim.particles[-1]
+        asteroid = Body(name=name, size=size, color=color, particle=particle)
+        self.asteroids.append(asteroid)
+    
 
     def create_doof_planet(self):
      
@@ -150,7 +251,9 @@ if __name__ == '__main__':
    
     print("Testing SPOCK integration...")
     
-   
+    # Test asteroid loading
+    sim.load_asteroids(count=500)
+    
     sim.create_doof_planet()
    
     test_params = {
