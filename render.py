@@ -99,6 +99,7 @@ class OrbitTrail:
 class AsteroidTrail:
     def __init__(self):
         self.trails = {}  # body_id -> (x, y)
+        self.visible = True  # Add visibility toggle
     
     def add_position(self, body_id, x, y):
         if body_id not in self.trails:
@@ -109,6 +110,9 @@ class AsteroidTrail:
     
     def get_trail(self, body_id):
         return self.trails.get(body_id, [])
+    
+    def toggle_visibility(self):
+        self.visible = not self.visible
 
 
 # Global viewport instance
@@ -195,12 +199,13 @@ def main(output_video, asteroids):
             orbits_surface.fill((0, 0, 0, 0))
             asteroid_orbits_surface.fill((0,0,0,0))
             # Redraw all existing trail points at new zoom level
-            for k, asteroid in enumerate(sim.asteroids):
-                trail_positions = asteroid_orbit_trail.get_trail(k)
-                for trail_x, trail_y in trail_positions:
-                    trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
-                    if trail_pixel_pos:
-                        pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+            if asteroid_orbit_trail.visible:  # Only redraw if visible
+                for k, asteroid in enumerate(sim.asteroids):
+                    trail_positions = asteroid_orbit_trail.get_trail(k)
+                    for trail_x, trail_y in trail_positions:
+                        trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
+                        if trail_pixel_pos:
+                            pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
                 for trail_x, trail_y in trail_positions:
@@ -215,18 +220,28 @@ def main(output_video, asteroids):
             orbit_trail.trails.clear()
             asteroid_orbits_surface.fill((0, 0, 0, 0))
             asteroid_orbit_trail.trails.clear()
-        for k, asteroid in enumerate(sim.asteroids):
-            current_pos = (asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y)
-            
-            # Only add and draw if this is a new position
-            trail_positions = asteroid_orbit_trail.get_trail(k)
-            if not trail_positions or trail_positions[-1] != current_pos:
-                asteroid_orbit_trail.add_position(k, current_pos[0], current_pos[1])
+        
+        # Only update asteroid trails if they're visible
+        if asteroid_orbit_trail.visible:
+            for k, asteroid in enumerate(sim.asteroids):
+                current_pos = (asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y)
                 
-                # Draw only the new trail point
-                trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
-                if trail_pixel_pos:
-                    pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+                # Only add and draw if this is a new position
+                trail_positions = asteroid_orbit_trail.get_trail(k)
+                if not trail_positions or trail_positions[-1] != current_pos:
+                    asteroid_orbit_trail.add_position(k, current_pos[0], current_pos[1])
+                    
+                    # Draw only the new trail point
+                    trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
+                    if trail_pixel_pos:
+                        pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+        else:
+            # Still add positions to trails even when not visible, just don't draw them
+            for k, asteroid in enumerate(sim.asteroids):
+                current_pos = (asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y)
+                trail_positions = asteroid_orbit_trail.get_trail(k)
+                if not trail_positions or trail_positions[-1] != current_pos:
+                    asteroid_orbit_trail.add_position(k, current_pos[0], current_pos[1])
         
         # Add current positions to orbit trails and draw new trail points
         for i, body in enumerate(sim.bodies):
@@ -275,7 +290,8 @@ def main(output_video, asteroids):
         
         
         screen.blit(orbits_surface, (0, 0))
-        screen.blit(asteroid_orbits_surface, (0, 0))  #dahes 
+        if asteroid_orbit_trail.visible:  # Only blit asteroid orbits if visible
+            screen.blit(asteroid_orbits_surface, (0, 0))  #dahes 
         screen.blit(bodies_surface, (0, 0))
 
         
@@ -285,13 +301,13 @@ def main(output_video, asteroids):
         num_asteroids = max(0, len(sim.asteroids))  # Total bodies minus Sun and 8 planets
     
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} \nAsteroids: {num_asteroids}", True, (255, 255, 255))
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} ", True, (255, 255, 255))
         years_text = font1.render(f"no of years passed: {get_time(sim.t):.0f}", True, (255, 255, 255))
-        controls_text = font_small.render("Controls: N=Show asteroid names, L=Load more asteroids", True, (200, 200, 200))
+       #q controls_text = font_small.render("Controls: N=Show asteroid names, L=Load more asteroids", True, (200, 200, 200))\nAsteroids: {num_asteroids}
         
         screen.blit(zoom_text, (1200, 10))
         screen.blit(years_text, (10, 800))
-        screen.blit(controls_text, (10, 10))
+        #screen.blit(controls_text, (10, 10))
 
         sun_distance = calculate_dist(sim.bodies[0], sim.bodies[3])
 
@@ -335,6 +351,20 @@ def main(output_video, asteroids):
                     quit()
                 elif event.key == pygame.K_t:
                     stars_visible['value'] = not stars_visible['value']
+                elif event.key == pygame.K_o:
+                    asteroid_orbit_trail.toggle_visibility()
+                    # Clear the asteroid orbits surface when toggling off
+                    if not asteroid_orbit_trail.visible:
+                        asteroid_orbits_surface.fill((0, 0, 0, 0))
+                    else:
+                        # Redraw all asteroid trails when toggling back on
+                        asteroid_orbits_surface.fill((0, 0, 0, 0))
+                        for k, asteroid in enumerate(sim.asteroids):
+                            trail_positions = asteroid_orbit_trail.get_trail(k)
+                            for trail_x, trail_y in trail_positions:
+                                trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
+                                if trail_pixel_pos:
+                                    pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
                 elif event.key == pygame.K_PLUS:
                     viewport.zoom_in()
                 elif event.key == pygame.K_MINUS:
