@@ -70,7 +70,7 @@ class NEALoader:
         
         print(f"\nTotal asteroids loaded: {len(self.asteroids)}")
     
-    def filter_asteroids(self, 
+    '''def filter_asteroids(self, 
                         max_count: int = 10000,
                         min_size: Optional[float] = None,
                         max_size: Optional[float] = None,
@@ -116,9 +116,9 @@ class NEALoader:
                 break
         
         print(f"Filtered to {len(filtered)} asteroids")
-        return filtered
+        return filtered'''
     
-    def get_interesting_asteroids(self, count: int = 500):
+    def get_asteroids(self, count: int = 500):
         if not self.loaded:
             self.load_asteroids(limit=10000)  # Load a subset first
         
