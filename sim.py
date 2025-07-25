@@ -234,6 +234,66 @@ class Simulation:
         except Exception as e:
             print(f"Error adding asteroid {asteroid_name}: {e}")
             continue
+    
+    def get_body_info(self, body_index):
+     """Get information about a planet/body"""
+     if body_index >= len(self.bodies):
+        return None
+    
+     body = self.bodies[body_index]
+     info = {
+        'name': body.name,
+        'type': 'planet',
+        'size': body.size,
+        'color': body.color,
+        'position': (body.x, body.y)
+      }
+    
+    # Add orbital parameters if available (skip Sun)
+     if body_index > 0 and hasattr(body.particle, 'a'):
+        info.update({
+            'semi_major_axis': f"{body.particle.a:.3f} AU",
+            'eccentricity': f"{body.particle.e:.3f}",
+            'mass': f"{body.particle.m:.6f} Solar masses"
+        })
+    
+     return info
+
+    def get_asteroid_info(self, asteroid_index):
+     """Get information about an asteroid"""
+     if asteroid_index >= len(self.asteroids):
+        return None
+    
+     asteroid = self.asteroids[asteroid_index]
+    
+    # Try to find original data
+     original_data = None
+     if hasattr(self, 'asteroid_data') and asteroid_index < len(self.asteroid_data):
+        original_data = self.asteroid_data[asteroid_index]
+    
+     info = {
+        'name': asteroid.name,
+        'type': 'asteroid',
+        'size': asteroid.size,
+        'color': asteroid.color,
+        'position': (asteroid.x, asteroid.y)
+     }
+    
+    # Add orbital data
+     if hasattr(asteroid.particle, 'a'):
+        info.update({
+            'semi_major_axis': f"{asteroid.particle.a:.3f} AU",
+            'eccentricity': f"{asteroid.particle.e:.3f}",
+            'inclination': f"{np.degrees(asteroid.particle.inc):.1f}°"
+        })
+    
+    # Add original JSON data if available
+     if original_data and isinstance(original_data, dict):
+        for key in ['H', 'G', 'epoch', 'M', 'n']:
+            if key in original_data:
+                info[key] = original_data[key]
+    
+     return info
  
 
     def add(self, name='noname', size=10, color='black', **kwargs):
