@@ -118,9 +118,9 @@ class NEALoader:
         print(f"Filtered to {len(filtered)} asteroids")
         return filtered'''
     
-    def get_asteroids(self, count: int = 500):
+    def get_asteroids(self, count: int = 10000):
         if not self.loaded:
-            self.load_asteroids(limit=10000)  # Load a subset first
+            self.load_asteroids(limit=100000)  # Load a subset first
         
 
         regular = []
@@ -133,46 +133,46 @@ class NEALoader:
         return regular[:count]
     
     def convert_to_rebound_params(self, asteroid_data: Dict):
-        """Convert asteroid JSON data to rebound parameters"""
         
-        # Extract orbital elements
-        a = asteroid_data.get('a')  # Semi-major axis in AU
-        e = asteroid_data.get('e')  # Eccentricity
-        inc = np.radians(asteroid_data.get('i'))  # Inclination
+        
+      
+        a = asteroid_data.get('a')  
+        e = asteroid_data.get('e')  
+        inc = np.radians(asteroid_data.get('i'))  
         Omega = np.radians(asteroid_data.get('Node'))  # Longitude of ascending node
         omega = np.radians(asteroid_data.get('Peri'))  # Argument of periapsis
         M = np.radians(asteroid_data.get('M'))  # Mean anomaly
         
-        # Convert mean anomaly to true anomaly (approximate)
+        
         f = M  # Simple approximation - for more accuracy, solve Kepler's equation
         
-        # Estimate mass from H magnitude (very rough approximation)
+       
         H = asteroid_data.get('H')
         estimated_diameter_km = 1329.0 / math.sqrt(0.25) * 10**(-0.2 * H)  # removed albedo
-        estimated_mass_kg = (4/3) * math.pi * (estimated_diameter_km * 500)**3 * 2000  # Assume 2 g/cc density
+        estimated_mass_kg = (4/3) * math.pi * (estimated_diameter_km * 5)**3 * 2 # Assume 2 g/cc density
         m_earth_kg = 5.972e24
         mass_earth_units = estimated_mass_kg / m_earth_kg
-        mass_solar_units =  mass_earth_units / 332946.0487 #wrt sun mass
+        mass_solar_units =  mass_earth_units / (332946.0487*100000000) #wrt sun mass
         
-        # Visual properties
+       
         name = asteroid_data.get('Name', 'Unknown')
         if asteroid_data.get('Number'):
             name = f"{asteroid_data['Number']} {name}"
         
-        # Size for visualization (scale with H magnitude)
+       
         visual_size = 0.1 * estimated_diameter_km/1391400# Smaller asteroids are tiny #wrt sun diameter
         
-        # Color based on orbit type
+       
         orbit_type = asteroid_data.get('Orbit_type', 'Unknown')
         color_map = {
             'Amor': 'aqua',
             'Apollo': 'aquamarine', 
-            'Aten': 'aquamarine3',
+            'Aten': 'mediumaquamarine',
             'Atira': 'aquamarine2',
-            'Centaur': 'chocolate',
+            'Distant Object': 'seagreen',
             'Trojan': 'chocolate1'
         }
-        color = color_map.get(orbit_type, 'gray')
+        color = color_map.get(orbit_type, 'seagreen')
         
         return {
             'name': name,
@@ -189,6 +189,6 @@ class NEALoader:
 
 if __name__ == "__main__":
     
-    loader = NEALoader('nea_extended.json')
+    loader = NEALoader('minor_planets/nea_extended.json')
     loader.load_asteroids()
     loader.print_sample_data()
