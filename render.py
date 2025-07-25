@@ -7,6 +7,7 @@ import math
 import numpy as np
 import random
 from gui.controllers import PygameGUIControls
+from webcolors import name_to_rgb
 
 
 
@@ -15,7 +16,7 @@ WIDTH = 1300
 #WIDTH = 1450
 HEIGHT = 850
 INITIAL_VIEWPORT_HALF_SIZE = 3 #change this for closer look at inner planets (=3) 
-MIN_ZOOM = 0.1  
+MIN_ZOOM = 0.1
 MAX_ZOOM = 100 
 
 SIZE = WIDTH, HEIGHT
@@ -114,11 +115,20 @@ class AsteroidTrail:
     def toggle_visibility(self):
         self.visible = not self.visible
 
+# Asteroid visibility state
+class AsteroidVisibility:
+    def __init__(self):
+        self.nea_visible = True
+        self.nea_orbits_visible = True
+        self.distant_visible = True
+        self.distant_orbits_visible = True
 
 # Global viewport instance
 viewport = Zwoom(INITIAL_VIEWPORT_HALF_SIZE)
 orbit_trail = OrbitTrail()
 asteroid_orbit_trail = AsteroidTrail()
+asteroid_visibility = AsteroidVisibility()
+
 def viewport_to_pixels(x, y):
     current_viewport = viewport.get_viewport()
     viewport_width = viewport.get_viewport_width()
@@ -133,17 +143,50 @@ def viewport_to_pixels(x, y):
     py = ((viewport_height - (y - current_viewport[0][1])) * HEIGHT) / viewport_height
 
     return px, py
+ 
+def pixels_to_viewport(px, py):
+   
+    current_viewport = viewport.get_viewport()
+    viewport_width = viewport.get_viewport_width()
+    viewport_height = viewport.get_viewport_height()
+    
+    world_x = current_viewport[0][0] + (px * viewport_width) / WIDTH
+    world_y = current_viewport[0][1] + ((HEIGHT - py) * viewport_height) / HEIGHT
+    
+    return world_x, world_y
+
+def should_draw_asteroid(k, asteroid, sim):
+    nea_count = getattr(sim, 'nea_count', 0)
+    
+    if k < nea_count:  # NEA asteroid
+        return asteroid_visibility.nea_visible
+    else:  # Distant asteroid
+        return asteroid_visibility.distant_visible
+
+def should_draw_asteroid_orbit(k, asteroid, sim):
+    nea_count = getattr(sim, 'nea_count', 0)
+    
+    if k < nea_count:  # NEA asteroid
+        return asteroid_visibility.nea_orbits_visible
+    else:  # Distant asteroid
+        return asteroid_visibility.distant_orbits_visible
 
 @click.command()
 @click.option('--output_video', '-v', default='', help='Filename of video to write to')
-@click.option('--asteroids', '-a', default=50, help='Number of asteroids to load')
-def main(output_video, asteroids):
+@click.option('--nea_asteroids', '-n', default=50, help='Number of NEAs to load')
+@click.option('--distant_asteroids', '-d', default=65, help='Number of distant asteroids to load')
+def main(output_video, nea_asteroids, distant_asteroids):
+
     sim = Simulation()
     
-    # Load asteroids if requested
-    if asteroids > 0:
-        print(f"Loading {asteroids} asteroids...")
-        sim.load_asteroids(count=asteroids)
+    # Load asteroids if requested and store counts
+    if nea_asteroids > 0 or distant_asteroids > 0:
+        print(f"Loading {nea_asteroids} NEA and {distant_asteroids} distant asteroids...")
+        sim.load_asteroids(nea_count=nea_asteroids, distant_count=distant_asteroids)
+        # Store counts for visibility checking
+        sim.nea_count = nea_asteroids
+        sim.distant_count = distant_asteroids
+
 
     pygame.init()
 
@@ -161,8 +204,8 @@ def main(output_video, asteroids):
     stars_visible = {'value': True}
   
 
-    # --- Use new GUI controls ---
-    gui_controls = PygameGUIControls(sim, viewport, paused, stars_visible)
+    
+    gui_controls = PygameGUIControls(sim, viewport, paused, stars_visible, asteroid_visibility)
 
     screen.fill((0, 0, 0))
     
@@ -201,13 +244,16 @@ def main(output_video, asteroids):
             # Redraw all existing trail points at new zoom level
             if asteroid_orbit_trail.visible:  # Only redraw if visible
                 for k, asteroid in enumerate(sim.asteroids):
-                    trail_positions = asteroid_orbit_trail.get_trail(k)
-                    for trail_x, trail_y in trail_positions:
-                        trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
-                        if trail_pixel_pos:
-                            pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+                    if should_draw_asteroid_orbit(k, asteroid, sim):
+                        trail_positions = asteroid_orbit_trail.get_trail(k)
+                        lighter_color = lighten_color(asteroid.color, 0.4)  # Make asteroid orbits lighter
+                        for trail_x, trail_y in trail_positions:
+                            trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
+                            if trail_pixel_pos:
+                                pygame.draw.circle( asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
+                #lighter_color = lighten_color(body.color, 0.4)  # Make planet orbits lighter
                 for trail_x, trail_y in trail_positions:
                     trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                     if trail_pixel_pos:
@@ -226,15 +272,17 @@ def main(output_video, asteroids):
             for k, asteroid in enumerate(sim.asteroids):
                 current_pos = (asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y)
                 
-                # Only add and draw if this is a new position
+                # Only add and draw if this is a new position and should be visible
                 trail_positions = asteroid_orbit_trail.get_trail(k)
                 if not trail_positions or trail_positions[-1] != current_pos:
                     asteroid_orbit_trail.add_position(k, current_pos[0], current_pos[1])
                     
-                    # Draw only the new trail point
-                    trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
-                    if trail_pixel_pos:
-                        pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+                    # Draw only the new trail point with lighter color if orbit should be visible
+                    if should_draw_asteroid_orbit(k, asteroid, sim):
+                        trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
+                        if trail_pixel_pos:
+                            lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
+                            pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
         else:
             # Still add positions to trails even when not visible, just don't draw them
             for k, asteroid in enumerate(sim.asteroids):
@@ -252,9 +300,10 @@ def main(output_video, asteroids):
             if not trail_positions or trail_positions[-1] != current_pos:
                 orbit_trail.add_position(i, current_pos[0], current_pos[1])
                 
-                # Draw only the new trail point
+                # Draw only the new trail point with lighter color
                 trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
                 if trail_pixel_pos:
+                  #  lighter_color = lighten_color(body.color, 0.4)  # Make planet orbits lighter
                     pygame.draw.circle(orbits_surface, body.color, trail_pixel_pos, 1)
 
 
@@ -280,11 +329,12 @@ def main(output_video, asteroids):
                 pygame.draw.circle(bodies_surface, body.color, position, size)
 
         for k, asteroid in enumerate(sim.asteroids):
-         position = viewport_to_pixels(asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y) #distance relative to mc (sun)
-         if position:
-                size = max((asteroid.size * WIDTH) / (viewport.half_size * 2), 1) 
-               # print(size)#change this - minimum size 3 for asteroids
-                pygame.draw.circle(bodies_surface, asteroid.color, position, size)
+            if should_draw_asteroid(k, asteroid, sim):  # Check if asteroid should be visible
+                position = viewport_to_pixels(asteroid.x - sim.bodies[0].x, asteroid.y - sim.bodies[0].y) #distance relative to mc (sun)
+                if position:
+                    size = max((asteroid.size * WIDTH) / (viewport.half_size * 2), 1.5) 
+                   # print(size)#change this - minimum size 3 for asteroids
+                    pygame.draw.circle(bodies_surface, asteroid.color, position, size)
                 
 
         
@@ -299,13 +349,15 @@ def main(output_video, asteroids):
 
         # Count asteroids for display
         num_asteroids = max(0, len(sim.asteroids))  # Total bodies minus Sun and 8 planets
+        nea_count = getattr(sim, 'nea_count', 0)
+        distant_count = getattr(sim, 'distant_count', 0)
     
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f} ", True, (255, 255, 255))
+        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f}\nNEA: {nea_count}, Distant: {distant_count} ", True, (255, 255, 255))
         years_text = font1.render(f"no of years passed: {get_time(sim.t):.0f}", True, (255, 255, 255))
        #q controls_text = font_small.render("Controls: N=Show asteroid names, L=Load more asteroids", True, (200, 200, 200))\nAsteroids: {num_asteroids}
         
-        screen.blit(zoom_text, (1200, 10))
+        screen.blit(zoom_text, (1150, 10))
         screen.blit(years_text, (10, 800))
         #screen.blit(controls_text, (10, 10))
 
@@ -360,11 +412,30 @@ def main(output_video, asteroids):
                         # Redraw all asteroid trails when toggling back on
                         asteroid_orbits_surface.fill((0, 0, 0, 0))
                         for k, asteroid in enumerate(sim.asteroids):
-                            trail_positions = asteroid_orbit_trail.get_trail(k)
-                            for trail_x, trail_y in trail_positions:
-                                trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
-                                if trail_pixel_pos:
-                                    pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
+                            if should_draw_asteroid_orbit(k, asteroid, sim):
+                                trail_positions = asteroid_orbit_trail.get_trail(k)
+                                lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
+                                for trail_x, trail_y in trail_positions:
+                                    trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
+                                    if trail_pixel_pos:
+                                        pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                # New asteroid visibility controls
+                elif event.key == pygame.K_1:  # Toggle NEA visibility
+                    asteroid_visibility.nea_visible = not asteroid_visibility.nea_visible
+                   # print(f"NEA asteroids {'visible' if asteroid_visibility.nea_visible else 'hidden'}")
+                elif event.key == pygame.K_2:  # Toggle NEA orbits
+                    asteroid_visibility.nea_orbits_visible = not asteroid_visibility.nea_orbits_visible
+                   # print(f"NEA orbits {'visible' if asteroid_visibility.nea_orbits_visible else 'hidden'}")
+                    # Trigger redraw of asteroid orbits surface
+                    viewport.zoom_changed = True
+                elif event.key == pygame.K_3:  # Toggle distant asteroid visibility
+                    asteroid_visibility.distant_visible = not asteroid_visibility.distant_visible
+                    #print(f"Distant asteroids {'visible' if asteroid_visibility.distant_visible else 'hidden'}")
+                elif event.key == pygame.K_4:  # Toggle distant asteroid orbits
+                    asteroid_visibility.distant_orbits_visible = not asteroid_visibility.distant_orbits_visible
+                   # print(f"Distant orbits {'visible' if asteroid_visibility.distant_orbits_visible else 'hidden'}")
+                    # Trigger redraw of asteroid orbits surface
+                    viewport.zoom_changed = True
                 elif event.key == pygame.K_PLUS:
                     viewport.zoom_in()
                 elif event.key == pygame.K_MINUS:
@@ -379,8 +450,23 @@ def main(output_video, asteroids):
                 elif event.button == 5:  # Mouse wheel down
                     viewport.zoom_out()
                 elif event.button == 1:  # Left mouse button
-                    dragging = True
-                    drag_start_pos = pygame.mouse.get_pos()
+                    #dragging = True
+                    mouse_pos = pygame.mouse.get_pos()
+                    if not gui_controls.info_bubble_visible:
+                        world_pos = pixels_to_viewport(mouse_pos[0], mouse_pos[1])
+                        if gui_controls.handle_object_click(mouse_pos, world_pos):
+                           pass  # Info bubble was shown
+                        else:
+                         # Start dragging if no object was clicked
+                          dragging = True
+                          drag_start_pos = mouse_pos
+                    else:
+           
+                     gui_controls._hide_info_bubble()
+                     dragging = True
+                    drag_start_pos = mouse_pos
+
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:  # Left mouse button
                     dragging = False
@@ -401,6 +487,17 @@ def save_screenshot(screen, t):
     cv.imwrite(filename, image)
     print(f'Wrote screenshot {filename}')
     pass
+
+def lighten_color(color, factor=0.6):
+    """Lightening a color by blending it with white
+    factor: 0.0 = original color, 1.0 = white
+    """
+    color = name_to_rgb(color)
+    return (
+        int(color[0] + (255 - color[0]) * factor),
+        int(color[1] + (255 - color[1]) * factor),
+        int(color[2] + (255 - color[2]) * factor)
+    )
 
 
 def image_from_screen(screen):
