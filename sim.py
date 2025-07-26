@@ -1,7 +1,8 @@
 import numpy as np
 import rebound
+import math
 from dataclasses import dataclass
-from neo_loader import NEALoader  # Import your NEA loader
+from neo_loader import NEALoader
 
 @dataclass
 class Body:
@@ -67,7 +68,7 @@ class Simulation:
         self.bodies = []
         self.asteroids=[]
 
-        m_earth = 1 / 332946.0487
+        m_earth = 1 / 332946.0487 
 
         # Add Sun and planets
         self.add(name='Sun', size=0.1, color='yellow', m=1)
@@ -211,7 +212,7 @@ class Simulation:
             
             # Adjust visual properties based on type
             if asteroid_type == 'distant':
-                visual_size = max(0.006, params['size'] * 3)  # Smaller for distant objects
+                visual_size = max(0.01, params['size'] * 3)  # Smaller for distant objects
                 color = params.get('color', 'darkblue')  # Different default color
             else:  # nea
                 visual_size = max(0.008, params['size'] * 5)
@@ -236,65 +237,102 @@ class Simulation:
             continue
     
     def get_body_info(self, body_index):
-     """Get information about a planet/body"""
+    
      if body_index >= len(self.bodies):
         return None
     
      body = self.bodies[body_index]
      info = {
         'name': body.name,
-        'type': 'planet',
         'size': body.size,
-        'color': body.color,
-        'position': (body.x, body.y)
+       # 'color': body.color,
+        'position': (body.x, body.y),
+        'mass': f"{(body.particle.m * 332946.0487):.3f} Earth Masses" 
       }
+     if body_index == 0:
+      info.update({ 'type':'star'})
     
-    # Add orbital parameters if available (skip Sun)
      if body_index > 0 and hasattr(body.particle, 'a'):
         info.update({
+            'type': 'planet',
             'semi_major_axis': f"{body.particle.a:.3f} AU",
             'eccentricity': f"{body.particle.e:.3f}",
-            'mass': f"{body.particle.m:.6f} Solar masses"
+            'inclination': body.particle.inc,
+            'Orbital Period' : f"{(body.particle.a**1.5):.2f} years"
+            
         })
     
      return info
 
     def get_asteroid_info(self, asteroid_index):
-     """Get information about an asteroid"""
-     if asteroid_index >= len(self.asteroids):
-        return None
-    
-     asteroid = self.asteroids[asteroid_index]
-    
-    # Try to find original data
-     original_data = None
-     if hasattr(self, 'asteroid_data') and asteroid_index < len(self.asteroid_data):
-        original_data = self.asteroid_data[asteroid_index]
-    
-     info = {
-        'name': asteroid.name,
-        'type': 'asteroid',
-        'size': asteroid.size,
-        'color': asteroid.color,
-        'position': (asteroid.x, asteroid.y)
-     }
-    
-    # Add orbital data
-     if hasattr(asteroid.particle, 'a'):
-        info.update({
-            'semi_major_axis': f"{asteroid.particle.a:.3f} AU",
-            'eccentricity': f"{asteroid.particle.e:.3f}",
-            'inclination': f"{np.degrees(asteroid.particle.inc):.1f}°"
-        })
-    
-    # Add original JSON data if available
-     if original_data and isinstance(original_data, dict):
-        for key in ['H', 'G', 'epoch', 'M', 'n']:
-            if key in original_data:
-                info[key] = original_data[key]
-    
-     return info
- 
+        if asteroid_index >= len(self.asteroids):
+            return None
+        
+        asteroid = self.asteroids[asteroid_index]
+        original_data = self.asteroid_data[asteroid_index] if asteroid_index < len(self.asteroid_data) else None
+        
+        info = {
+            'name': asteroid.name,
+            'type': 'asteroid',
+            'position': (asteroid.x, asteroid.y),
+        }
+        
+        if hasattr(asteroid.particle, 'a'):
+            info.update({
+                'semi_major_axis': f"{asteroid.particle.a:.4f} AU",
+                'eccentricity': f"{asteroid.particle.e:.4f}",
+                'inclination': f"{np.degrees(asteroid.particle.inc):.2f}°",
+                'orbital_period': f"{(asteroid.particle.a**1.5):.2f} years",
+            })
+        
+        if original_data and isinstance(original_data, dict):
+            data_map = {
+                'Orbit_type': 'orbit_type',
+                'Orbital_period': ('orbital_period_precise', lambda x: f"{x:.4f} years"),
+                'Synodic_period': ('synodic_period', lambda x: f"{x:.4f} years"),
+                'Perihelion_dist': ('perihelion_distance', lambda x: f"{x:.4f} AU"),
+                'Aphelion_dist': ('aphelion_distance', lambda x: f"{x:.4f} AU"),
+                'H': ('absolute_magnitude', lambda x: f"{x:.2f}"),
+                'G': ('slope_parameter', lambda x: f"{x:.2f}"),
+                'Number': 'catalog_number',
+                'Principal_desig': 'principal_designation',
+                'Last_obs': 'last_observation',
+                'Arc_years': 'observation_arc',
+                'Num_obs': 'total_observations',
+                'Num_opps': 'observation_oppositions',
+                'rms': ('rms_residual', lambda x: f"{x:.2f} arcsec"),
+                'M': ('mean_anomaly', lambda x: f"{x:.5f}°"),
+                'Peri': ('argument_of_periapsis', lambda x: f"{x:.5f}°"),
+                'Node': ('longitude_ascending_node', lambda x: f"{x:.5f}°"),
+                'n': ('mean_motion', lambda x: f"{x:.8f} °/day"),
+                'Epoch': ('epoch', lambda x: f"JD {x}"),
+                'Tp': ('time_of_periapsis', lambda x: f"JD {x:.5f}"),
+                'Semilatus_rectum': ('semilatus_rectum', lambda x: f"{x:.4f} AU"),
+            }
+            
+            for key, mapping in data_map.items():
+                if key in original_data:
+                    if isinstance(mapping, tuple):
+                        info[mapping[0]] = mapping[1](original_data[key])
+                    else:
+                        info[mapping] = original_data[key]
+            
+            if 'H' in original_data:
+                diameter_km = 1329.0 / math.sqrt(0.25) * 10**(-0.2 * original_data['H'])
+                info['estimated_diameter'] = f"{diameter_km:.2f} km"
+            
+            if 'U' in original_data:
+                uncertainty_map = {'0': 'Very well known', '1': 'Well known', '2': 'Good', 
+                                 '3': 'Fair', '4': 'Poor'}
+                info['orbit_uncertainty'] = uncertainty_map.get(original_data['U'], f"Quality code: {original_data['U']}")
+            
+            if original_data.get('NEO_flag'):
+                info['near_earth_object'] = "Yes"
+            
+            if original_data.get('One_km_NEO_flag'):
+                info['potentially_hazardous'] = "Yes (>1km diameter)"
+        
+        return info
 
     def add(self, name='noname', size=10, color='black', **kwargs):
         # Add a particle to the simulation and wrap it

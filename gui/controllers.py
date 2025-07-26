@@ -77,43 +77,42 @@ class PygameGUIControls:
         # All Orbits Toggle
         self.all_orbits_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 150), (200, 25)), text='Toggle All Orbits (O)', manager=self.manager, container=self.asteroid_panel)
         
-        # Input fields for Doof's parameters - moved to bottom right
-        self.param_panel = pg.elements.UIPanel(relative_rect=pygame.Rect((1000, 480), (250, 310)), manager=self.manager)
-        
-        self.dropdown_param_button = pg.elements.UIButton(relative_rect=pygame.Rect((50, 0), (150, 15)), text='▼ Doof Parameters', manager=self.manager, container=self.param_panel)
+# Input fields for Doof's parameters - moved to bottom right
+        self.param_panel = pg.elements.UIPanel(relative_rect=pygame.Rect((1000, 430), (290, 360)), manager=self.manager)
+
+        self.dropdown_param_button = pg.elements.UIButton(relative_rect=pygame.Rect((50, 0), (150, 15)), text='Planet-inator', manager=self.manager, container=self.param_panel)
 
         self.a_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 30), (100, 30)), manager=self.manager, container=self.param_panel)
         self.a_input.set_text("3.3")
-        self.a_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 30), (100, 30)), text="Distance from Sun (AU)", manager=self.manager, container=self.param_panel)
+        self.a_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 30), (160, 30)), text="Distance from Sun (AU)", manager=self.manager, container=self.param_panel)
 
         self.e_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 70), (100, 30)), manager=self.manager, container=self.param_panel)
         self.e_input.set_text("0.3")
-        self.e_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 70), (100, 30)), text="eccentricity", manager=self.manager, container=self.param_panel)
+        self.e_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 70), (160, 30)), text="eccentricity", manager=self.manager, container=self.param_panel)
 
         self.inc_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 110), (100, 30)), manager=self.manager, container=self.param_panel)
         self.inc_input.set_text("15")
-        self.inc_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 110), (100, 30)), text="inclination (°)", manager=self.manager, container=self.param_panel)
+        self.inc_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 110), (160, 30)), text="inclination (°)", manager=self.manager, container=self.param_panel)
 
         self.mass_input = pg.elements.UITextEntryLine(relative_rect=pygame.Rect((10, 150), (100, 30)), manager=self.manager, container=self.param_panel)
         self.mass_input.set_text("400")
-        self.mass_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 150), (100, 30)), text="mass (number of earth masses)", manager=self.manager, container=self.param_panel)
-        
-        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 180), (200, 30)), text="Create Doof's Planet", manager=self.manager, container=self.param_panel)
-        
-       
+        self.mass_label = pg.elements.UILabel(relative_rect=pygame.Rect((120, 150), (160, 30)), text="mass (number of earth masses)", manager=self.manager, container=self.param_panel)
+
+        self.doof_submit = pg.elements.UIButton(relative_rect=pygame.Rect((10, 190), (270, 30)), text="Create Doof's Planet", manager=self.manager, container=self.param_panel)
+
         self.prediction_label = pg.elements.UILabel(
-            relative_rect=pygame.Rect((10, 220), (230, 20)), 
-            text="Stability Prediction:", 
-            manager=self.manager, 
-            container=self.param_panel
-        )
-        
+    relative_rect=pygame.Rect((10, 230), (270, 20)), 
+    text="Stability Prediction:", 
+    manager=self.manager, 
+    container=self.param_panel
+)
+
         self.prediction_display = pg.elements.UITextBox(
-            relative_rect=pygame.Rect((10, 245), (230, 60)),
-            html_text="<font color='#AAAAAA'>No prediction yet...</font>",
-            manager=self.manager,
-            container=self.param_panel
-        )
+    relative_rect=pygame.Rect((10, 255), (270, 90)),
+    html_text="<font color='#AAAAAA'>No prediction yet...</font>",
+    manager=self.manager,
+    container=self.param_panel
+)
         
         # Speed control slider
         self.speed_slider = pg.elements.UIHorizontalSlider(
@@ -167,53 +166,96 @@ class PygameGUIControls:
         )
     
     def _setup_info_bubble(self, info_data, mouse_pos):
-     """Create info bubble at mouse position"""
-    # Calculate bubble size based on content
-     bubble_width = 250
-     bubble_height = 150 if info_data['type'] == 'planet' else 200
+        """Create enhanced info bubble with rich asteroid data"""
+        # Dynamic sizing based on content
+        is_asteroid = info_data['type'] == 'asteroid'
+        bubble_width = 450 if is_asteroid else 350
+        bubble_height = 400 if is_asteroid else 250
+        
+        # Keep on screen
+        x = min(mouse_pos[0], 1300 - bubble_width - 10)
+        y = min(mouse_pos[1], 1000 - bubble_height - 10)
+        
+        if self.info_bubble:
+            self.info_bubble.kill()
+            self.info_bubble_text.kill()
+        
+        self.info_bubble = pg.elements.UIPanel(relative_rect=pygame.Rect(x, y, bubble_width, bubble_height), manager=self.manager)
+        
+        # Enhanced formatting
+        html_text = f"<font color='#FFD700' size=5><b>{info_data['name']}</b></font><br>"
+        html_text += f"<font color='#AAAAAA'>Type: {info_data['type'].title()}</font><br><br>"
+        
+        if is_asteroid:
+            # Core orbital data
+            if 'orbit_type' in info_data:
+                html_text += f"<font color='#00FFFF'><b>Orbit Class:</b> {info_data['orbit_type']}</font><br>"
+            
+            if 'semi_major_axis' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
+            
+            if 'eccentricity' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
+            
+            if 'inclination' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
+            
+            # Physical properties
+            if 'estimated_diameter' in info_data:
+                html_text += f"<font color='#FFAA44'><b>Est. Diameter:</b> {info_data['estimated_diameter']}</font><br>"
+            
+            if 'absolute_magnitude' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Brightness (H):</b> {info_data['absolute_magnitude']}</font><br>"
+            
+            # Hazard status
+            if info_data.get('potentially_hazardous'):
+                html_text += f"<font color='#FF4444'><b>⚠️ POTENTIALLY HAZARDOUS</b></font><br>"
+            elif info_data.get('near_earth_object'):
+                html_text += f"<font color='#FFAA00'><b>Near-Earth Object</b></font><br>"
+            
+            html_text += "<br>"
+            
+            # Detailed orbital info (collapsible sections)
+            if 'synodic_period' in info_data:
+                html_text += f"<font color='#AAFFAA'><b>Synodic Period:</b> {info_data['synodic_period']}</font><br>"
+            
+            if 'perihelion_distance' in info_data and 'aphelion_distance' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Range:</b> {info_data['perihelion_distance']} - {info_data['aphelion_distance']}</font><br>"
+            
+            # Discovery info
+            if 'catalog_number' in info_data:
+                html_text += f"<font color='#AAAAAA'><b>Number:</b> {info_data['catalog_number']}</font><br>"
+            
+            if 'last_observation' in info_data:
+                html_text += f"<font color='#AAAAAA'><b>Last Observed:</b> {info_data['last_observation']}</font><br>"
+            
+            if 'total_observations' in info_data:
+                html_text += f"<font color='#AAAAAA'><b>Observations:</b> {info_data['total_observations']}</font><br>"
+            
+            # Orbit quality
+            if 'orbit_uncertainty' in info_data:
+                color = '#44FF44' if 'Very well' in info_data['orbit_uncertainty'] else '#FFAA00' if 'Well' in info_data['orbit_uncertainty'] else '#FF4444'
+                html_text += f"<font color='{color}'><b>Orbit Quality:</b> {info_data['orbit_uncertainty']}</font><br>"
+        
+        else:  # Planet info
+            if 'semi_major_axis' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
+            if 'eccentricity' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
+            if 'inclination' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
+            if 'mass' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Mass:</b> {info_data['mass']}</font><br>"
+            if 'Orbital Period' in info_data:
+                html_text += f"<font color='#CCCCCC'><b>Orbital Period:</b> {info_data['Orbital Period']}</font><br>"
+        
+        html_text += "<br><font color='#888888'>Click outside to close</font>"
+        
+        self.info_bubble_text = pg.elements.UITextBox(relative_rect=pygame.Rect(15, 15, bubble_width-30, bubble_height-30), html_text=html_text, manager=self.manager, container=self.info_bubble)
+        
+        self.info_bubble_visible = True
+        self.info_bubble_data = info_data
     
-    # Adjust position to keep bubble on screen
-     x = min(mouse_pos[0], 1300 - bubble_width - 10)
-     y = min(mouse_pos[1], 850 - bubble_height - 10)
-    
-     if self.info_bubble:
-        self.info_bubble.kill()
-        self.info_bubble_text.kill()
-    
-     self.info_bubble = pg.elements.UIPanel(
-        relative_rect=pygame.Rect(x, y, bubble_width, bubble_height),
-        manager=self.manager
-     )
-
-     html_text = f"<font color='#FFD700'><b>{info_data['name']}</b></font><br>"
-     html_text += f"<font color='#AAAAAA'>Type: {info_data['type'].title()}</font><br><br>"
-    
-     if 'semi_major_axis' in info_data:
-        html_text += f"<font color='#CCCCCC'>Distance: {info_data['semi_major_axis']}</font><br>"
-        html_text += f"<font color='#CCCCCC'>Eccentricity: {info_data['eccentricity']}</font><br>"
-    
-     if 'inclination' in info_data:
-        html_text += f"<font color='#CCCCCC'>Inclination: {info_data['inclination']}</font><br>"
-    
-     if 'mass' in info_data:
-        html_text += f"<font color='#CCCCCC'>Mass: {info_data['mass']}</font><br>"
-    
-    # Add asteroid-specific data
-     for key in ['H', 'G', 'epoch']:
-        if key in info_data:
-            html_text += f"<font color='#CCCCCC'>{key}: {info_data[key]}</font><br>"
-    
-     html_text += "<br><font color='#888888'>Click elsewhere to close</font>"
-    
-     self.info_bubble_text = pg.elements.UITextBox(
-        relative_rect=pygame.Rect(10, 10, bubble_width-20, bubble_height-20),
-        html_text=html_text,
-        manager=self.manager,
-        container=self.info_bubble
-     )
-         
-     self.info_bubble_visible = True
-     self.info_bubble_data = info_data
     
     def _hide_info_bubble(self):
      """Hide the info bubble"""
@@ -226,26 +268,36 @@ class PygameGUIControls:
      self.info_bubble_data = None
 
     
+
     def handle_object_click(self, mouse_pos, world_pos):
-     """Handle clicking on objects to show info"""
-    # This will be called from your main render file
-    # Check if we clicked on a planet
+    # larger half_size bigger tolerance
+    # smaller half_sizesmaller tolerance
+     base_planet_tolerance = 0.1
+     base_asteroid_tolerance = 0.05
+    
+
+     zoom_scale_factor = max(1.0, self.viewport.half_size / 3.0)  # 3.0 is the initial viewport size
+    
+     planet_tolerance = base_planet_tolerance * zoom_scale_factor
+     asteroid_tolerance = base_asteroid_tolerance * zoom_scale_factor
+    
+   
      for i, body in enumerate(self.sim.bodies):
         body_world_pos = (body.x - self.sim.bodies[0].x, body.y - self.sim.bodies[0].y)
         distance = ((world_pos[0] - body_world_pos[0])**2 + (world_pos[1] - body_world_pos[1])**2)**0.5
         
-        if distance < 0.1:  # Adjust click tolerance as needed
+        if distance < planet_tolerance:
             info = self.sim.get_body_info(i)
             if info:
                 self._setup_info_bubble(info, mouse_pos)
                 return True
-     
-         # Check asteroids
+    
+    
      for i, asteroid in enumerate(self.sim.asteroids):
         asteroid_world_pos = (asteroid.x - self.sim.bodies[0].x, asteroid.y - self.sim.bodies[0].y)
         distance = ((world_pos[0] - asteroid_world_pos[0])**2 + (world_pos[1] - asteroid_world_pos[1])**2)**0.5
         
-        if distance < 0.05:  # Smaller tolerance for asteroids
+        if distance < asteroid_tolerance:
             info = self.sim.get_asteroid_info(i)
             if info:
                 self._setup_info_bubble(info, mouse_pos)
@@ -363,10 +415,10 @@ class PygameGUIControls:
                 lower = result['lower']
                 upper = result['upper']
                 
-                if median < 100:
+                if median < 70:
                     color = '#FF4444'  #
                     stability_text = " UNSTABLE!"
-                elif median < 300:
+                elif median < 200:
                     color = '#FFAA00'  
                     stability_text = "RISKY"
                 else:
@@ -427,21 +479,21 @@ class PygameGUIControls:
             self.asteroid_options_button.set_text('▶ Asteroid Options')
 
     def _set_param_panel_visibility(self, visible):
-        for element in [self.a_input, self.a_label, self.e_input, self.e_label, self.inc_input, self.inc_label, self.mass_input, self.mass_label, self.doof_submit, self.prediction_label, self.prediction_display]:
-            element.visible = visible
-        
-        if visible:
-            self.param_panel.set_relative_position((1000, 480))
-            self.param_panel.set_dimensions((250, 310))
-            self.dropdown_param_button.set_text('hide')
-        else:
-            self.param_panel.set_relative_position((1000, 790))
-            self.param_panel.set_dimensions((250, 20))
-            # Reset button text if intro was skipped
-            if not self.show_intro and not self.intro_clicked:
-                self.dropdown_param_button.set_text('Planet-inator')
-            elif self.intro_clicked:
-                self.dropdown_param_button.set_text('Planet-inator')
+     for element in [self.a_input, self.a_label, self.e_input, self.e_label, self.inc_input, self.inc_label, self.mass_input, self.mass_label, self.doof_submit, self.prediction_label, self.prediction_display]:
+        element.visible = visible
+    
+     if visible:
+        self.param_panel.set_relative_position((1000, 430))
+        self.param_panel.set_dimensions((290, 360))
+        self.dropdown_param_button.set_text('hide')
+     else:
+        self.param_panel.set_relative_position((1000, 790))
+        self.param_panel.set_dimensions((290, 20))
+        # Reset button text if intro was skipped
+        if not self.show_intro and not self.intro_clicked:
+            self.dropdown_param_button.set_text('Planet-inator')
+        elif self.intro_clicked:
+            self.dropdown_param_button.set_text('Planet-inator')
 
     def draw_ui(self, screen):
        
@@ -517,7 +569,7 @@ class PygameGUIControls:
                 if not self.asteroid_panel_collapsed:
                     if event.ui_element == self.nea_toggle_button:
                         self.asteroid_visibility.nea_visible = not self.asteroid_visibility.nea_visible
-                        print(f"NEA asteroids {'visible' if self.asteroid_visibility.nea_visible else 'hidden'}")
+                        print(f"Near Earth Asteroids {'visible' if self.asteroid_visibility.nea_visible else 'hidden'}")
                     elif event.ui_element == self.nea_orbits_button:
                         self.asteroid_visibility.nea_orbits_visible = not self.asteroid_visibility.nea_orbits_visible
                         print(f"NEA orbits {'visible' if self.asteroid_visibility.nea_orbits_visible else 'hidden'}")
@@ -527,12 +579,11 @@ class PygameGUIControls:
                         print(f"Distant asteroids {'visible' if self.asteroid_visibility.distant_visible else 'hidden'}")
                     elif event.ui_element == self.distant_orbits_button:
                         self.asteroid_visibility.distant_orbits_visible = not self.asteroid_visibility.distant_orbits_visible
-                        print(f"Distant orbits {'visible' if self.asteroid_visibility.distant_orbits_visible else 'hidden'}")
+                        print(f"Distant asteroid orbits {'visible' if self.asteroid_visibility.distant_orbits_visible else 'hidden'}")
                         self.viewport.zoom_changed = True  # Trigger redraw
                     elif event.ui_element == self.all_orbits_button:
                         # This should trigger the same logic as the 'O' key
-                        # We need to access the asteroid_orbit_trail from the main file
-                        # For now, let's print a message - you'll need to connect this to your main logic
+                        # need to access the asteroid_orbit_trail from the main file
                         print("Toggle all asteroid orbits - connect this to asteroid_orbit_trail.toggle_visibility()")
                
                 if event.ui_element == self.doof_submit:
