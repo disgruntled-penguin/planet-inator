@@ -166,95 +166,179 @@ class PygameGUIControls:
         )
     
     def _setup_info_bubble(self, info_data, mouse_pos):
-        """Create enhanced info bubble with rich asteroid data"""
-        # Dynamic sizing based on content
-        is_asteroid = info_data['type'] == 'asteroid'
-        bubble_width = 450 if is_asteroid else 350
-        bubble_height = 400 if is_asteroid else 250
+     """Create enhanced info bubble with rich planetary and asteroid data"""
+    # Dynamic sizing based on content
+     is_asteroid = info_data.get('type') == 'asteroid'
+     is_planet = info_data.get('type') == 'planet'
+     is_star = info_data.get('type') == 'star'
+     is_fictional = info_data.get('type') == 'fictional_planet'
+    
+    # Determine bubble size based on content richness
+     if is_asteroid:
+        bubble_width = 450
+        bubble_height = 400
+     elif is_planet or is_fictional:
+        bubble_width = 480
+        bubble_height = 450
+     elif is_star:
+        bubble_width = 400
+        bubble_height = 300
+     else:
+        bubble_width = 350
+        bubble_height = 250
+    
+    # Keep on screen
+     x = min(mouse_pos[0], 1300 - bubble_width - 10)
+     y = min(mouse_pos[1], 1000 - bubble_height - 10)
+    
+     if self.info_bubble:
+        self.info_bubble.kill()
+        self.info_bubble_text.kill()
+    
+     self.info_bubble = pg.elements.UIPanel(relative_rect=pygame.Rect(x, y, bubble_width, bubble_height), manager=self.manager)
+    
+    # Enhanced formatting with comprehensive data
+     html_text = f"<font color='#FFD700' size=5><b>{info_data['name']}</b></font><br>"
+     html_text += f"<font color='#AAAAAA'>Type: {info_data.get('type', 'Unknown').title()}</font><br>"
+    
+    # Add mass for all bodies
+     if 'mass' in info_data:
+        html_text += f"<font color='#CCCCCC'><b>Mass:</b> {info_data['mass']}</font><br>"
+    
+     html_text += "<br>"
+    
+  
+     if is_star:
+        if 'radius' in info_data:
+            html_text += f"<font color='#FFAA44'><b>Radius:</b> {info_data['radius']}</font><br>"
+        if 'surface_temperature' in info_data:
+            html_text += f"<font color='#FF6666'><b>Temperature:</b> {info_data['surface_temperature']}</font><br>"
+        if 'spectral_class' in info_data:
+            html_text += f"<font color='#AAFFAA'><b>Spectral Class:</b> {info_data['spectral_class']}</font><br>"
+        if 'luminosity' in info_data:
+            html_text += f"<font color='#FFFF88'><b>Luminosity:</b> {info_data['luminosity']}</font><br>"
+        if 'composition' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Composition:</b> {info_data['composition']}</font><br>"
+        if 'rotation_period' in info_data:
+            html_text += f"<font color='#AACCFF'><b>Rotation:</b> {info_data['rotation_period']}</font><br>"
+    
+    # PLANET DATA
+     elif is_planet or is_fictional:
+        # Physical properties
+        if 'radius' in info_data:
+            html_text += f"<font color='#FFAA44'><b>Radius:</b> {info_data['radius']}</font><br>"
+        if 'surface_temperature' in info_data:
+            html_text += f"<font color='#FF6666'><b>Temperature:</b> {info_data['surface_temperature']}</font><br>"
+        if 'surface_gravity' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Gravity:</b> {info_data['surface_gravity']}</font><br>"
+        if 'rotation_period' in info_data:
+            html_text += f"<font color='#AACCFF'><b>Rotation:</b> {info_data['rotation_period']}</font><br>"
+        if 'moons' in info_data:
+            html_text += f"<font color='#CCAAFF'><b>Moons:</b> {info_data['moons']}</font><br>"
         
-        # Keep on screen
-        x = min(mouse_pos[0], 1300 - bubble_width - 10)
-        y = min(mouse_pos[1], 1000 - bubble_height - 10)
+        html_text += "<br>"
         
-        if self.info_bubble:
-            self.info_bubble.kill()
-            self.info_bubble_text.kill()
+        # Orbital mechanics (enhanced data)
+        if 'semi_major_axis' in info_data:
+            html_text += f"<font color='#00FFFF'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
+        if 'orbital_period' in info_data:
+            html_text += f"<font color='#FFCC00'><b>Orbital Period:</b> {info_data['orbital_period']}</font><br>"
+        if 'eccentricity' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
+        if 'inclination' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
         
-        self.info_bubble = pg.elements.UIPanel(relative_rect=pygame.Rect(x, y, bubble_width, bubble_height), manager=self.manager)
+        # Advanced orbital data
+        if 'perihelion_distance' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Perihelion:</b> {info_data['perihelion_distance']}</font><br>"
+        if 'aphelion_distance' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Aphelion:</b> {info_data['aphelion_distance']}</font><br>"
+        if 'mean_orbital_velocity' in info_data:
+            html_text += f"<font color='#AAFFAA'><b>Orbital Speed:</b> {info_data['mean_orbital_velocity']}</font><br>"
+        if 'velocity_variation' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Speed Variation:</b> {info_data['velocity_variation']}</font><br>"
+        if 'orbital_type' in info_data:
+            html_text += f"<font color='#CCFFCC'><b>Orbit Type:</b> {info_data['orbital_type'].title()}</font><br>"
         
-        # Enhanced formatting
-        html_text = f"<font color='#FFD700' size=5><b>{info_data['name']}</b></font><br>"
-        html_text += f"<font color='#AAAAAA'>Type: {info_data['type'].title()}</font><br><br>"
+        # Atmospheric and composition data
+        if 'atmosphere' in info_data:
+            html_text += f"<font color='#AACCAA'><b>Atmosphere:</b> {info_data['atmosphere']}</font><br>"
+        if 'composition' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Composition:</b> {info_data['composition']}</font><br>"
         
-        if is_asteroid:
-            # Core orbital data
-            if 'orbit_type' in info_data:
-                html_text += f"<font color='#00FFFF'><b>Orbit Class:</b> {info_data['orbit_type']}</font><br>"
-            
-            if 'semi_major_axis' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
-            
-            if 'eccentricity' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
-            
-            if 'inclination' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
-            
-            # Physical properties
-            if 'estimated_diameter' in info_data:
-                html_text += f"<font color='#FFAA44'><b>Est. Diameter:</b> {info_data['estimated_diameter']}</font><br>"
-            
-            if 'absolute_magnitude' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Brightness (H):</b> {info_data['absolute_magnitude']}</font><br>"
-            
-            # Hazard status
-            if info_data.get('potentially_hazardous'):
-                html_text += f"<font color='#FF4444'><b>⚠️ POTENTIALLY HAZARDOUS</b></font><br>"
-            elif info_data.get('near_earth_object'):
-                html_text += f"<font color='#FFAA00'><b>Near-Earth Object</b></font><br>"
-            
-            html_text += "<br>"
-            
-            # Detailed orbital info (collapsible sections)
-            if 'synodic_period' in info_data:
-                html_text += f"<font color='#AAFFAA'><b>Synodic Period:</b> {info_data['synodic_period']}</font><br>"
-            
-            if 'perihelion_distance' in info_data and 'aphelion_distance' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Range:</b> {info_data['perihelion_distance']} - {info_data['aphelion_distance']}</font><br>"
-            
-            # Discovery info
-            if 'catalog_number' in info_data:
-                html_text += f"<font color='#AAAAAA'><b>Number:</b> {info_data['catalog_number']}</font><br>"
-            
-            if 'last_observation' in info_data:
-                html_text += f"<font color='#AAAAAA'><b>Last Observed:</b> {info_data['last_observation']}</font><br>"
-            
-            if 'total_observations' in info_data:
-                html_text += f"<font color='#AAAAAA'><b>Observations:</b> {info_data['total_observations']}</font><br>"
-            
-            # Orbit quality
-            if 'orbit_uncertainty' in info_data:
-                color = '#44FF44' if 'Very well' in info_data['orbit_uncertainty'] else '#FFAA00' if 'Well' in info_data['orbit_uncertainty'] else '#FF4444'
-                html_text += f"<font color='{color}'><b>Orbit Quality:</b> {info_data['orbit_uncertainty']}</font><br>"
+        # Special properties for fictional planets
+        if is_fictional:
+            if 'origin' in info_data:
+                html_text += f"<font color='#FF88FF'><b>Origin:</b> {info_data['origin']}</font><br>"
+            if 'description' in info_data:
+                html_text += f"<font color='#FFAAFF'><b>Description:</b> {info_data['description']}</font><br>"
+
         
-        else:  # Planet info
-            if 'semi_major_axis' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
-            if 'eccentricity' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
-            if 'inclination' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
-            if 'mass' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Mass:</b> {info_data['mass']}</font><br>"
-            if 'Orbital Period' in info_data:
-                html_text += f"<font color='#CCCCCC'><b>Orbital Period:</b> {info_data['Orbital Period']}</font><br>"
+
+  
+
+     elif is_asteroid:
+        # Core orbital data
+        if 'orbit_type' in info_data:
+            html_text += f"<font color='#00FFFF'><b>Orbit Class:</b> {info_data['orbit_type']}</font><br>"
         
-        html_text += "<br><font color='#888888'>Click outside to close</font>"
+        if 'semi_major_axis' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Distance:</b> {info_data['semi_major_axis']}</font><br>"
         
-        self.info_bubble_text = pg.elements.UITextBox(relative_rect=pygame.Rect(15, 15, bubble_width-30, bubble_height-30), html_text=html_text, manager=self.manager, container=self.info_bubble)
+        if 'eccentricity' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Eccentricity:</b> {info_data['eccentricity']}</font><br>"
         
-        self.info_bubble_visible = True
-        self.info_bubble_data = info_data
+        if 'inclination' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Inclination:</b> {info_data['inclination']}</font><br>"
+        
+        # Physical properties
+        if 'estimated_diameter' in info_data:
+            html_text += f"<font color='#FFAA44'><b>Est. Diameter:</b> {info_data['estimated_diameter']}</font><br>"
+        
+        if 'absolute_magnitude' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Brightness (H):</b> {info_data['absolute_magnitude']}</font><br>"
+        
+        # Hazard status
+        if info_data.get('potentially_hazardous'):
+            html_text += f"<font color='#FF4444'><b>⚠️ POTENTIALLY HAZARDOUS</b></font><br>"
+        elif info_data.get('near_earth_object'):
+            html_text += f"<font color='#FFAA00'><b>Near-Earth Object</b></font><br>"
+        
+        html_text += "<br>"
+        
+
+        if 'synodic_period' in info_data:
+            html_text += f"<font color='#AAFFAA'><b>Synodic Period:</b> {info_data['synodic_period']}</font><br>"
+        
+        if 'perihelion_distance' in info_data and 'aphelion_distance' in info_data:
+            html_text += f"<font color='#CCCCCC'><b>Range:</b> {info_data['perihelion_distance']} - {info_data['aphelion_distance']}</font><br>"
+        
+        # Discovery info
+        if 'catalog_number' in info_data:
+            html_text += f"<font color='#AAAAAA'><b>Number:</b> {info_data['catalog_number']}</font><br>"
+        
+        if 'last_observation' in info_data:
+            html_text += f"<font color='#AAAAAA'><b>Last Observed:</b> {info_data['last_observation']}</font><br>"
+        
+        if 'total_observations' in info_data:
+            html_text += f"<font color='#AAAAAA'><b>Observations:</b> {info_data['total_observations']}</font><br>"
+        
+        # Orbit quality
+        if 'orbit_uncertainty' in info_data:
+            color = '#44FF44' if 'Very well' in info_data['orbit_uncertainty'] else '#FFAA00' if 'Well' in info_data['orbit_uncertainty'] else '#FF4444'
+            html_text += f"<font color='{color}'><b>Orbit Quality:</b> {info_data['orbit_uncertainty']}</font><br>"
+    
+     html_text += "<br><font color='#888888'>Click outside to close</font>"
+    
+     self.info_bubble_text = pg.elements.UITextBox(
+        relative_rect=pygame.Rect(15, 15, bubble_width-30, bubble_height-30), 
+        html_text=html_text, 
+        manager=self.manager, 
+        container=self.info_bubble
+    )
+    
+     self.info_bubble_visible = True
+     self.info_bubble_data = info_data
     
     
     def _hide_info_bubble(self):
@@ -281,7 +365,7 @@ class PygameGUIControls:
      planet_tolerance = base_planet_tolerance * zoom_scale_factor
      asteroid_tolerance = base_asteroid_tolerance * zoom_scale_factor
     
-   
+    # Check if we clicked on a planet
      for i, body in enumerate(self.sim.bodies):
         body_world_pos = (body.x - self.sim.bodies[0].x, body.y - self.sim.bodies[0].y)
         distance = ((world_pos[0] - body_world_pos[0])**2 + (world_pos[1] - body_world_pos[1])**2)**0.5
@@ -292,7 +376,7 @@ class PygameGUIControls:
                 self._setup_info_bubble(info, mouse_pos)
                 return True
     
-    
+    # Check asteroids with scaled tolerance
      for i, asteroid in enumerate(self.sim.asteroids):
         asteroid_world_pos = (asteroid.x - self.sim.bodies[0].x, asteroid.y - self.sim.bodies[0].y)
         distance = ((world_pos[0] - asteroid_world_pos[0])**2 + (world_pos[1] - asteroid_world_pos[1])**2)**0.5

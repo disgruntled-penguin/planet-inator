@@ -237,7 +237,6 @@ class Simulation:
             continue
     
     def get_body_info(self, body_index):
-    
      if body_index >= len(self.bodies):
         return None
     
@@ -245,24 +244,216 @@ class Simulation:
      info = {
         'name': body.name,
         'size': body.size,
-       # 'color': body.color,
         'position': (body.x, body.y),
-        'mass': f"{(body.particle.m * 332946.0487):.3f} Earth Masses" 
-      }
-     if body_index == 0:
-      info.update({ 'type':'star'})
+        'mass': f"{(body.particle.m * 332946.0487):.3f} Earth Masses"
+     }
     
-     if body_index > 0 and hasattr(body.particle, 'a'):
+    # Enhanced planetary data dictionary
+     planetary_data = {
+        'Sun': {
+            'type': 'star',
+            'radius': '696,340 km',
+            'surface_temperature': '5,778 K',
+            'spectral_class': 'G2V',
+            'luminosity': '3.828 × 10²⁶ W',
+            'composition': 'Hydrogen (~73%), Helium (~25%)',
+            'rotation_period': '25.05 days (equatorial)'
+        },
+        'Mercury': {
+            'radius': '2,439.7 km',
+            'surface_temperature': '167°C (average)',
+            'atmosphere': 'Extremely thin (oxygen, sodium, hydrogen)',
+            'rotation_period': '58.65 days',
+            'surface_gravity': '3.7 m/s²',
+            'moons': 0,
+            'composition': 'Iron core, silicate mantle'
+        },
+        'Venus': {
+            'radius': '6,051.8 km',
+            'surface_temperature': '464°C',
+            'atmosphere': 'Dense CO₂ (96.5%), N₂ (3.5%)',
+            'rotation_period': '243.02 days (retrograde)',
+            'surface_gravity': '8.87 m/s²',
+            'moons': 0,
+            'composition': 'Iron core, silicate mantle'
+        },
+        'Earth': {
+            'radius': '6,371 km',
+            'surface_temperature': '15°C (average)',
+            'atmosphere': 'N₂ (78%), O₂ (21%), Ar (0.93%)',
+            'rotation_period': '23.93 hours',
+            'surface_gravity': '9.81 m/s²',
+            'moons': 1,
+            'composition': 'Iron core, silicate mantle, water oceans'
+        },
+        'Mars': {
+            'radius': '3,389.5 km',
+            'surface_temperature': '-65°C (average)',
+            'atmosphere': 'Thin CO₂ (95.3%), N₂ (2.7%), Ar (1.6%)',
+            'rotation_period': '24.62 hours',
+            'surface_gravity': '3.71 m/s²',
+            'moons': 2,
+            'composition': 'Iron core, basaltic crust'
+        },
+        'Jupiter': {
+            'radius': '69,911 km',
+            'surface_temperature': '-110°C (cloud tops)',
+            'atmosphere': 'H₂ (89%), He (10%), traces of methane',
+            'rotation_period': '9.93 hours',
+            'surface_gravity': '24.79 m/s²',
+            'moons': 95,
+            'composition': 'Gas giant - mostly hydrogen and helium'
+        },
+        'Saturn': {
+            'radius': '58,232 km',
+            'surface_temperature': '-140°C (cloud tops)',
+            'atmosphere': 'H₂ (96%), He (3%), traces of methane',
+            'rotation_period': '10.66 hours',
+            'surface_gravity': '10.44 m/s²',
+            'moons': 146,
+            'composition': 'Gas giant with prominent ring system'
+        },
+        'Uranus': {
+            'radius': '25,362 km',
+            'surface_temperature': '-195°C',
+            'atmosphere': 'H₂ (83%), He (15%), methane (2%)',
+            'rotation_period': '17.24 hours (retrograde)',
+            'surface_gravity': '8.69 m/s²',
+            'moons': 28,
+            'composition': 'Ice giant with tilted axis (98°)'
+        },
+        'Neptune': {
+            'radius': '24,622 km',
+            'surface_temperature': '-200°C',
+            'atmosphere': 'H₂ (80%), He (19%), methane (1%)',
+            'rotation_period': '16.11 hours',
+            'surface_gravity': '11.15 m/s²',
+            'moons': 16,
+            'composition': 'Ice giant with strong winds'
+        }
+    }
+    
+    # Add planetary-specific data
+     if body.name in planetary_data:
+        info.update(planetary_data[body.name])
+    
+    # Handle Sun separately (no orbital parameters)
+     if body_index == 0:
+        info.update({'type': 'star'})
+        return info
+    
+    # For planets and other orbiting bodies, add orbital mechanics
+     if hasattr(body.particle, 'a'):
+        # Basic orbital elements
+        semi_major_axis = body.particle.a
+        eccentricity = body.particle.e
+        inclination_rad = body.particle.inc
+        inclination_deg = np.degrees(inclination_rad)
+        
+        # Derived orbital parameters
+        orbital_period_years = semi_major_axis**1.5
+        orbital_period_days = orbital_period_years * 365.25
+        
+        # Perihelion and aphelion distances
+        perihelion = semi_major_axis * (1 - eccentricity)
+        aphelion = semi_major_axis * (1 + eccentricity)
+        
+        # Orbital velocity calculations (approximate)
+        # Mean orbital velocity: v = 2π * a / T
+        mean_orbital_velocity = (2 * np.pi * semi_major_axis * 149597870.7) / (orbital_period_days * 24 * 3600)  # km/s
+        
+        # Perihelion and aphelion velocities using vis-viva equation
+        # v = sqrt(GM(2/r - 1/a)) where GM_sun ≈ 1.327124400e11 km³/s²
+        GM_sun = 1.327124400e11  # km³/s²
+        v_perihelion = math.sqrt(GM_sun * (2/(perihelion * 149597870.7) - 1/(semi_major_axis * 149597870.7)))
+        v_aphelion = math.sqrt(GM_sun * (2/(aphelion * 149597870.7) - 1/(semi_major_axis * 149597870.7)))
+        
+        # Mean motion (degrees per day)
+        mean_motion = 360.0 / orbital_period_days
+        
+        # Orbital circumference
+        # Approximation for elliptical orbit: C ≈ π * [3(a+b) - sqrt((3a+b)(a+3b))]
+        # where b = a * sqrt(1 - e²)
+        b = semi_major_axis * math.sqrt(1 - eccentricity**2)  # semi-minor axis
+        orbital_circumference = np.pi * (3*(semi_major_axis + b) - 
+                                       math.sqrt((3*semi_major_axis + b) * (semi_major_axis + 3*b)))
+        orbital_circumference_km = orbital_circumference * 149597870.7
+        
+        # Angular momentum per unit mass (specific angular momentum)
+        # h = sqrt(GM * a * (1 - e²))
+        specific_angular_momentum = math.sqrt(GM_sun * semi_major_axis * 149597870.7 * (1 - eccentricity**2))
+        
+        # Escape velocity at perihelion
+        escape_velocity_perihelion = math.sqrt(2 * GM_sun / (perihelion * 149597870.7))
+        
+        # Hill sphere radius (approximate, assumes circular orbit)
+        # R_Hill ≈ a * (m_planet / 3*m_sun)^(1/3)
+        if body.particle.m > 0:
+            hill_sphere_radius = semi_major_axis * ((body.particle.m / 3.0)**(1/3))
+        else:
+            hill_sphere_radius = 0
+        
+        # Update info with orbital mechanics
         info.update({
             'type': 'planet',
-            'semi_major_axis': f"{body.particle.a:.3f} AU",
-            'eccentricity': f"{body.particle.e:.3f}",
-            'inclination': body.particle.inc,
-            'Orbital Period' : f"{(body.particle.a**1.5):.2f} years"
-            
+            'semi_major_axis': f"{semi_major_axis:.6f} AU",
+            'eccentricity': f"{eccentricity:.6f}",
+            'inclination': f"{inclination_deg:.3f}°",
+            'inclination_rad': f"{inclination_rad:.6f} rad",
+            'orbital_period': f"{orbital_period_years:.2f} years",
+            'orbital_period_days': f"{orbital_period_days:.1f} days",
+            'perihelion_distance': f"{perihelion:.6f} AU ({perihelion * 149.6:.1f} million km)",
+            'aphelion_distance': f"{aphelion:.6f} AU ({aphelion * 149.6:.1f} million km)",
+            'orbital_eccentricity_type': 'circular' if eccentricity < 0.05 else 'elliptical' if eccentricity < 0.9 else 'highly elliptical',
+            'mean_orbital_velocity': f"{mean_orbital_velocity:.2f} km/s",
+            'perihelion_velocity': f"{v_perihelion:.2f} km/s",
+            'aphelion_velocity': f"{v_aphelion:.2f} km/s",
+            'velocity_variation': f"{((v_perihelion - v_aphelion) / mean_orbital_velocity * 100):.1f}%",
+            'mean_motion': f"{mean_motion:.6f} °/day",
+            'orbital_circumference': f"{orbital_circumference:.3f} AU ({orbital_circumference_km/1e9:.1f} billion km)",
+            'specific_angular_momentum': f"{specific_angular_momentum:.2e} km²/s",
+            'escape_velocity_at_perihelion': f"{escape_velocity_perihelion:.2f} km/s",
+            'hill_sphere_radius': f"{hill_sphere_radius:.6f} AU" if hill_sphere_radius > 0 else "N/A"
+        })
+        
+        # Add some interesting derived facts
+        facts = []
+        
+        if eccentricity > 0.1:
+            speed_diff = v_perihelion - v_aphelion
+            facts.append(f"Travels {speed_diff:.1f} km/s faster at closest approach to Sun")
+        
+        if inclination_deg > 5:
+            facts.append(f"Orbit tilted {inclination_deg:.1f}° from Earth's orbital plane")
+        
+        if orbital_period_years < 1:
+            facts.append(f"Completes orbit in {orbital_period_days:.0f} days")
+        elif orbital_period_years > 10:
+            facts.append(f"Takes {orbital_period_years:.0f} years to complete one orbit")
+        
+        # Compare to Earth
+        if body.name != 'Earth':
+            earth_distance = 1.0  # AU
+            distance_comparison = semi_major_axis / earth_distance
+            if distance_comparison > 1:
+                facts.append(f"{distance_comparison:.1f}x farther from Sun than Earth")
+            else:
+                facts.append(f"{1/distance_comparison:.1f}x closer to Sun than Earth")
+        
+        if facts:
+            info['interesting_facts'] = facts
+    
+    # Special handling for Doof's planet
+     if body.name == "doofs-planet":
+        info.update({
+            'type': 'planet',
+            'origin': "Dr. Doofenshmirtz's creation",
+            'description': 'Purple coloration (unknown composition)',
+
         })
     
      return info
+
 
     def get_asteroid_info(self, asteroid_index):
         if asteroid_index >= len(self.asteroids):
