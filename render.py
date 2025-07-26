@@ -246,11 +246,11 @@ def main(output_video, nea_asteroids, distant_asteroids):
                 for k, asteroid in enumerate(sim.asteroids):
                     if should_draw_asteroid_orbit(k, asteroid, sim):
                         trail_positions = asteroid_orbit_trail.get_trail(k)
-                        lighter_color = lighten_color(asteroid.color, 0.4)  # Make asteroid orbits lighter
+                        #lighter_color = lighten_color(asteroid.color, 0.4)  # Make asteroid orbits lighter
                         for trail_x, trail_y in trail_positions:
                             trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                             if trail_pixel_pos:
-                                pygame.draw.circle( asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                                pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
                 #lighter_color = lighten_color(body.color, 0.4)  # Make planet orbits lighter
@@ -281,8 +281,8 @@ def main(output_video, nea_asteroids, distant_asteroids):
                     if should_draw_asteroid_orbit(k, asteroid, sim):
                         trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
                         if trail_pixel_pos:
-                            lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
-                            pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                            #lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
+                            pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
         else:
             # Still add positions to trails even when not visible, just don't draw them
             for k, asteroid in enumerate(sim.asteroids):
@@ -414,11 +414,11 @@ def main(output_video, nea_asteroids, distant_asteroids):
                         for k, asteroid in enumerate(sim.asteroids):
                             if should_draw_asteroid_orbit(k, asteroid, sim):
                                 trail_positions = asteroid_orbit_trail.get_trail(k)
-                                lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
+                               # lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
                                 for trail_x, trail_y in trail_positions:
                                     trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                                     if trail_pixel_pos:
-                                        pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                                        pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
                 # New asteroid visibility controls
                 elif event.key == pygame.K_1:  # Toggle NEA visibility
                     asteroid_visibility.nea_visible = not asteroid_visibility.nea_visible

@@ -126,7 +126,7 @@ class NEALoader:
             'MBA': 'brown',
             'Centaur': 'lightgreen'
         }
-        color = color_map.get(orbit_type, 'seagreen2')
+        color = color_map.get(orbit_type, 'seagreen')
         
         return {
             'name': name,
