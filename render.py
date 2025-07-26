@@ -97,6 +97,60 @@ class OrbitTrail:
     def get_trail(self, body_id):
         return self.trails.get(body_id, [])
     
+planet_textures = {}
+
+def load_planet_textures():
+    texture_files = {
+        'Sun': 'textures/2k_sun.jpg',
+        'Mercury': 'textures/2k_mercury.jpg',
+        'Venus': 'textures/2k_venus.jpg',
+        'Earth': 'textures/2k_earth.jpg',
+        'Mars': 'textures/2k_mars.jpg',
+        'Jupiter': 'textures/2k_jupiter.jpg',
+        'Saturn': 'textures/2k_saturn.jpg',
+        'Uranus': 'textures/2k_uranus.jpg',
+        'Neptune': 'textures/2k_neptune.jpg'
+    }
+    
+    for name, file in texture_files.items():
+        try:
+            planet_textures[name] = pygame.image.load(file)
+        except pygame.error:
+            planet_textures[name] = None
+
+def draw_planet(surface, body, position, size, t):
+    texture = planet_textures.get(body.name)
+    if texture and size > 6:
+        # Create a circular surface
+        circle_size = int(size * 2)
+        circle_surface = pygame.Surface((circle_size, circle_size), pygame.SRCALPHA)
+        
+        # Scale and rotate texture
+        scaled_texture = pygame.transform.scale(texture, (circle_size, circle_size))
+        if body.name != 'Sun':
+            rotation = (t * 50 * (1.0 / max(0.1, getattr(body.particle, 'a', 1.0)))) % 360
+            scaled_texture = pygame.transform.rotate(scaled_texture, rotation)
+            # Re-center after rotation
+            temp_rect = scaled_texture.get_rect()
+            circle_surface = pygame.Surface((temp_rect.width, temp_rect.height), pygame.SRCALPHA)
+        
+        # Draw texture onto circular surface
+        circle_surface.blit(scaled_texture, (0, 0))
+        
+        # Clip to circle using a temporary surface
+        temp_surface = pygame.Surface((circle_size, circle_size), pygame.SRCALPHA)
+        pygame.draw.circle(temp_surface, (255, 255, 255, 255), (circle_size//2, circle_size//2), int(size))
+        
+        # Use the circle as an alpha mask
+        final_surface = pygame.Surface((circle_size, circle_size), pygame.SRCALPHA)
+        final_surface.blit(scaled_texture, (0, 0))
+        final_surface.blit(temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        
+        rect = final_surface.get_rect(center=position)
+        surface.blit(final_surface, rect)
+    else:
+        pygame.draw.circle(surface, body.color, position, int(size))
+    
 class AsteroidTrail:
     def __init__(self):
         self.trails = {}  # body_id -> (x, y)
@@ -189,6 +243,7 @@ def main(output_video, nea_asteroids, distant_asteroids):
 
 
     pygame.init()
+    load_planet_textures()
 
     screen = pygame.display.set_mode(SIZE)
     asteroid_orbits_surface = pygame.Surface(SIZE, pygame.SRCALPHA)
@@ -246,11 +301,11 @@ def main(output_video, nea_asteroids, distant_asteroids):
                 for k, asteroid in enumerate(sim.asteroids):
                     if should_draw_asteroid_orbit(k, asteroid, sim):
                         trail_positions = asteroid_orbit_trail.get_trail(k)
-                        lighter_color = lighten_color(asteroid.color, 0.4)  # Make asteroid orbits lighter
+                        #lighter_color = lighten_color(asteroid.color, 0.4)  # Make asteroid orbits lighter
                         for trail_x, trail_y in trail_positions:
                             trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                             if trail_pixel_pos:
-                                pygame.draw.circle( asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                                pygame.draw.circle( asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
             for i, body in enumerate(sim.bodies):
                 trail_positions = orbit_trail.get_trail(i)
                 #lighter_color = lighten_color(body.color, 0.4)  # Make planet orbits lighter
@@ -281,8 +336,8 @@ def main(output_video, nea_asteroids, distant_asteroids):
                     if should_draw_asteroid_orbit(k, asteroid, sim):
                         trail_pixel_pos = viewport_to_pixels(current_pos[0], current_pos[1])
                         if trail_pixel_pos:
-                            lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
-                            pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                           # lighter_color = lighten_color(asteroid.color, 0.2)  # Make asteroid orbits lighter
+                            pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
         else:
             # Still add positions to trails even when not visible, just don't draw them
             for k, asteroid in enumerate(sim.asteroids):
@@ -326,7 +381,7 @@ def main(output_video, nea_asteroids, distant_asteroids):
                         glow_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
                         pygame.draw.circle(glow_surf, (*glow_color, alpha), (int(position[0]), int(position[1])), r)
                         bodies_surface.blit(glow_surf, (0, 0))
-                pygame.draw.circle(bodies_surface, body.color, position, size)
+                draw_planet(bodies_surface, body, position, size, sim.t)
 
         for k, asteroid in enumerate(sim.asteroids):
             if should_draw_asteroid(k, asteroid, sim):  # Check if asteroid should be visible
@@ -418,7 +473,7 @@ def main(output_video, nea_asteroids, distant_asteroids):
                                 for trail_x, trail_y in trail_positions:
                                     trail_pixel_pos = viewport_to_pixels(trail_x, trail_y)
                                     if trail_pixel_pos:
-                                        pygame.draw.circle(asteroid_orbits_surface, lighter_color, trail_pixel_pos, 1)
+                                        pygame.draw.circle(asteroid_orbits_surface, asteroid.color, trail_pixel_pos, 1)
                 # New asteroid visibility controls
                 elif event.key == pygame.K_1:  # Toggle NEA visibility
                     asteroid_visibility.nea_visible = not asteroid_visibility.nea_visible
@@ -452,19 +507,21 @@ def main(output_video, nea_asteroids, distant_asteroids):
                 elif event.button == 1:  # Left mouse button
                     #dragging = True
                     mouse_pos = pygame.mouse.get_pos()
-                    if not gui_controls.info_bubble_visible:
-                        world_pos = pixels_to_viewport(mouse_pos[0], mouse_pos[1])
-                        if gui_controls.handle_object_click(mouse_pos, world_pos):
-                           pass  # Info bubble was shown
-                        else:
-                         # Start dragging if no object was clicked
-                          dragging = True
-                          drag_start_pos = mouse_pos
+
+                    if gui_controls.info_bubble_visible:
+       
+                      bubble_rect = gui_controls.info_bubble.get_relative_rect()
+                      bubble_rect.topleft = gui_controls.info_bubble.get_abs_rect().topleft
+            
+                      if not bubble_rect.collidepoint(mouse_pos):
+               
+                       gui_controls._hide_info_bubble()
+     
                     else:
-           
-                     gui_controls._hide_info_bubble()
-                     dragging = True
-                    drag_start_pos = mouse_pos
+                      world_pos = pixels_to_viewport(mouse_pos[0], mouse_pos[1])
+                      if not gui_controls.handle_object_click(mouse_pos, world_pos):
+                         dragging = True
+                         drag_start_pos = mouse_pos
 
 
             elif event.type == pygame.MOUSEBUTTONUP:
