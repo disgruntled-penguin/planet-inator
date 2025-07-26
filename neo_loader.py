@@ -70,54 +70,6 @@ class NEALoader:
         
         print(f"\nTotal asteroids loaded: {len(self.asteroids)}")
     
-    '''def filter_asteroids(self, 
-                        max_count: int = 10000,
-                        min_size: Optional[float] = None,
-                        max_size: Optional[float] = None,
-                        orbit_types: Optional[List[str]] = None,
-                        min_period: Optional[float] = None,
-                        max_period: Optional[float] = None,
-                        
-                        potentially_hazardous_only: bool = False):
-        """Filter asteroids based on various criteria"""
-        
-        if not self.loaded:
-            print("Error: Asteroids not loaded yet. Call load_asteroids() first.")
-            return []
-        
-        filtered = []
-        
-        for asteroid in self.asteroids:
-            # Size filtering (using H magnitude - lower H means bigger asteroid)
-            if min_size is not None and asteroid.get('H', 999) > min_size:
-                continue
-            if max_size is not None and asteroid.get('H', 0) < max_size:
-                continue
-            
-            # Orbit type filtering
-            if orbit_types and asteroid.get('Orbit_type') not in orbit_types:
-                continue
-            
-            # Period filtering
-            period = asteroid.get('Orbital_period', 0)
-            if min_period is not None and period < min_period:
-                continue
-            if max_period is not None and period > max_period:
-                continue
-            
-            # Potentially Hazardous Object filtering
-            if potentially_hazardous_only and not asteroid.get('One_km_NEO_flag', 0):
-                continue
-            
-            filtered.append(asteroid)
-            
-            # Stop if we've reached the limit
-            if len(filtered) >= max_count:
-                break
-        
-        print(f"Filtered to {len(filtered)} asteroids")
-        return filtered'''
-    
     def get_asteroids(self, count: int = 10000):
         if not self.loaded:
             self.load_asteroids(limit=100000)  # Load a subset first
@@ -170,9 +122,11 @@ class NEALoader:
             'Aten': 'mediumaquamarine',
             'Atira': 'aquamarine2',
             'Distant Object': 'seagreen',
-            'Trojan': 'chocolate1'
+            'Trojan': 'chocolate1',
+            'MBA': 'brown',
+            'Centaur': 'lightgreen'
         }
-        color = color_map.get(orbit_type, 'seagreen')
+        color = color_map.get(orbit_type, 'seagreen2')
         
         return {
             'name': name,
@@ -184,7 +138,8 @@ class NEALoader:
             'inc': inc,
             'Omega': Omega,
             'omega': omega,
-            'f': f
+            'f': f,
+            'orbit' : orbit_type
         }
 
 if __name__ == "__main__":
