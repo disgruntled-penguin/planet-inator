@@ -1,5 +1,5 @@
 import time
-from rebound.sim import Simulation
+from sim import Simulation
 import pygame
 import cv2 as cv
 import click
