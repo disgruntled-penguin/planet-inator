@@ -16,6 +16,23 @@ celestial profile bubbles<br>
 a little choas by the rouge planet<br>
 <img src = moments/finish.png width="650" height="375"><br>
 
+try it yourself:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements
+python3 render.py
+```
+change number of asteroids being loaded: (default is 115 combined)
+```bash
+python3 render.py --nea_asteroids 1000 --distant_Asteroids 450
+```
+(requires higher GPU performance)
+
+
+
+
 thanks to [rebound](https://rebound.readthedocs.io/en/latest/) for making n-body simulations simpler
 
 
