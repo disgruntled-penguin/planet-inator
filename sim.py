@@ -2,7 +2,7 @@ import numpy as np
 import rebound
 import math
 from dataclasses import dataclass
-from rebound.asteroid_loader import NEALoader
+from asteroid_loader import NEALoader
 
 @dataclass
 class Body:
