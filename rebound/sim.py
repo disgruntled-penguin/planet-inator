@@ -2,7 +2,7 @@ import numpy as np
 import rebound
 import math
 from dataclasses import dataclass
-from neo_loader import NEALoader
+from rebound.asteroid_loader import NEALoader
 
 @dataclass
 class Body:
@@ -114,19 +114,19 @@ class Simulation:
         total_loaded = 0
         all_asteroids = []
         
-        # Load NEA asteroids if requested
+        # Load NEAs if requested
         if nea_count > 0:
             print(f"Loading {nea_count} NEA asteroids...")
             self.nea_loader.load_asteroids(limit=5000)
             nea_asteroids = self.nea_loader.get_asteroids(nea_count)
             
-            # Handle both string and dict formats
+            # Handle both string and dict 
             for asteroid in nea_asteroids:
                 if isinstance(asteroid, dict):
                     asteroid['_type'] = 'nea'
                     all_asteroids.append(asteroid)
                 else:
-                    # If it's a string, create a simple dict wrapper
+                    # If string, create a simple dict wrapper
                     all_asteroids.append({'Name': asteroid, '_type': 'nea', '_raw': asteroid})
             total_loaded += len(nea_asteroids)
         
@@ -213,7 +213,7 @@ class Simulation:
             # Adjust visual properties based on type
             if asteroid_type == 'distant':
                 visual_size = max(0.01, params['size'] * 3)  # Smaller for distant objects
-                color = params.get('color', 'darkblue')  # Different default color
+                color = params.get('color', 'darkblue')  
             else:  # nea
                 visual_size = max(0.008, params['size'] * 5)
                 color = params.get('color', 'aqua')
@@ -248,7 +248,7 @@ class Simulation:
         'mass': f"{(body.particle.m * 332946.0487):.3f} Earth Masses"
      }
     
-    # Enhanced planetary data dictionary
+    # planetary data dictionary
      planetary_data = {
         'Sun': {
             'type': 'star',
@@ -333,7 +333,7 @@ class Simulation:
         }
     }
     
-    # Add planetary-specific data
+
      if body.name in planetary_data:
         info.update(planetary_data[body.name])
     
@@ -393,7 +393,7 @@ class Simulation:
         else:
             hill_sphere_radius = 0
         
-        # Update info with orbital mechanics
+        # info with orbital mechanics
         info.update({
             'type': 'planet',
             'semi_major_axis': f"{semi_major_axis:.6f} AU",
@@ -416,7 +416,7 @@ class Simulation:
             'hill_sphere_radius': f"{hill_sphere_radius:.6f} AU" if hill_sphere_radius > 0 else "N/A"
         })
         
-        # Add some interesting derived facts
+        # derived facts
         facts = []
         
         if eccentricity > 0.1:
@@ -443,13 +443,12 @@ class Simulation:
         if facts:
             info['interesting_facts'] = facts
     
-    # Special handling for Doof's planet
+    
      if body.name == "doofs-planet":
         info.update({
             'type': 'planet',
             'origin': "Dr. Doofenshmirtz's creation",
             'description': 'Purple coloration (unknown composition)',
-
         })
     
      return info
@@ -546,7 +545,7 @@ class Simulation:
      
         if not self.doof_planet_created:
             self.doof_planet_created = True
-            # Add the planet to the current simulation
+          
             self.add(**self.doof_params)
             self.sim.move_to_com()
             print("[debug] Doof's planet created for the first time!")
@@ -555,7 +554,7 @@ class Simulation:
 
     def update_doof_params(self, new_params):
         #trigger spock prediction
-        # Update stored parameters
+      
         for key, val in new_params.items():
             if key in self.doof_params:
                 self.doof_params[key] = val
@@ -591,7 +590,7 @@ class Simulation:
 if __name__ == '__main__':
     sim = Simulation()
    
-    print("Testing SPOCK integration...")
+
     
     # Test asteroid loading
     sim.load_asteroids(count=500)
@@ -611,12 +610,12 @@ if __name__ == '__main__':
     spock_sim = sim.get_spock_ready_simulation()
     
     print(f"Simulation ready for SPOCK with {spock_sim.N} bodies")
-    print("Integration test...")
+
     
-    # Run a few iterations
-    for i in range(10):
+   
+    ''' for i in range(10):
         sim.iterate()
         if i % 3 == 0:
-            print(f"Iteration {i}: t = {sim.t:.3f}")
+            print(f"Iteration {i}: t = {sim.t:.3f}")'''
     
-    print("Simulation test complete!")
+  
