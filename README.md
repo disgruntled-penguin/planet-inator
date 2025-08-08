@@ -7,13 +7,13 @@ A simplified version of [super earth simulations run by stephen kane](https://ma
 
 Heres the ui: <br>
 <img src = moments/closeup-stable.png width="650" height="425"><br>
-close up<br>
+Close up with Near Earth Asteroids<br>
 <img src = moments/far-calculating.png width="650" height="425"><br>
-distant asteroids in green<br>
+Distant asteroids/Trans Neptunians in green<br>
 <img src = moments/sisyphus.png width="650" height="425"><br>
-celestial profile bubbles<br>
+Celestial profile bubbles<br>
 <img src = moments/ui.png width="650" height="425"><br>
-a little choas by the rouge planet<br>
+a little chaos by the rouge planet<br>
 <img src = moments/finish.png width="650" height="375"><br>
 
 try it yourself:
@@ -31,7 +31,7 @@ python3 render.py --nea_asteroids 1000 --distant_Asteroids 450
 (requires higher GPU performance)
 
 
-
+Find demo and other videos here: [@penpenenguin](https://www.youtube.com/@penpenenguin)
 
 thanks to [rebound](https://rebound.readthedocs.io/en/latest/) for making n-body simulations simpler
 
