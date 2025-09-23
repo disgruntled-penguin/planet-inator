@@ -10,8 +10,6 @@ from gui.controllers import PygameGUIControls
 from webcolors import name_to_rgb
 
 
-
-
 WIDTH = 1300
 #WIDTH = 1450
 HEIGHT = 850
@@ -353,11 +351,21 @@ def main(output_video, nea_asteroids, distant_asteroids):
         distant_count = getattr(sim, 'distant_count', 0)
     
 
-        zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f}\nNEA: {nea_count}, Distant: {distant_count} ", True, (255, 255, 255))
+        #zoom_text = font.render(f"Zoom: {viewport.zoom_factor:.2f}x \nCenter: {viewport.center_x:.2f}, {viewport.center_y:.2f} \nHalf-size: {viewport.half_size:.2f}\nNEA: {nea_count}, Distant: {distant_count} ", True, (255, 255, 255))
         years_text = font1.render(f"no of years passed: {get_time(sim.t):.0f}", True, (255, 255, 255))
+        lines = [
+            f"Zoom: {viewport.zoom_factor:.2f}x",
+            f"Center: {viewport.center_x:.2f}, {viewport.center_y:.2f}",
+            f"Half-size: {viewport.half_size:.2f}",
+            f"NEA: {nea_count}, Distant: {distant_count}"]
+        line_height = font.get_linesize()
+        for i, line_text in enumerate(lines):
+            text_surface = font.render(line_text, True, (255, 255, 255))
+            screen.blit(text_surface, (1150,10 + i * line_height))
+       # had to do this cause someone fixed a f string bug ?:(
        #q controls_text = font_small.render("Controls: N=Show asteroid names, L=Load more asteroids", True, (200, 200, 200))\nAsteroids: {num_asteroids}
         
-        screen.blit(zoom_text, (1150, 10))
+       # screen.blit(zoom_text, (1150, 10))
         screen.blit(years_text, (10, 800))
         #screen.blit(controls_text, (10, 10))
 

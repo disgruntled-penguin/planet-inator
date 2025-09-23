@@ -67,7 +67,7 @@ class PygameGUIControls:
         self.asteroid_panel_title = pg.elements.UILabel(relative_rect=pygame.Rect((10, 5), (200, 20)), text='Asteroid Options', manager=self.manager, container=self.asteroid_panel)
         
         # NEA Controls
-        self.nea_toggle_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 30), (200, 25)), text='Toggle NEA Asteroids (1)', manager=self.manager, container=self.asteroid_panel)
+        self.nea_toggle_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 30), (200, 25)), text='Toggle NEAs (1)', manager=self.manager, container=self.asteroid_panel)
         self.nea_orbits_button = pg.elements.UIButton(relative_rect=pygame.Rect((10, 60), (200, 25)), text='Toggle NEA Orbits (2)', manager=self.manager, container=self.asteroid_panel)
         
         # Distant Controls
@@ -507,7 +507,7 @@ class PygameGUIControls:
                     stability_text = "RISKY"
                 else:
                     color = '#44FF44'  
-                    stability_text = "STABLE"
+                    stability_text = "STABLE" # for a human lifetime
                 
                 prediction_text = f"""
                 <font color='{color}'><b>{stability_text}</b></font><br>
@@ -668,7 +668,7 @@ class PygameGUIControls:
                     elif event.ui_element == self.all_orbits_button:
                         # This should trigger the same logic as the 'O' key
                         # need to access the asteroid_orbit_trail from the main file
-                        print("Toggle all asteroid orbits - connect this to asteroid_orbit_trail.toggle_visibility()")
+                        print("Toggle all asteroid orbits")
                
                 if event.ui_element == self.doof_submit:
                     try:
