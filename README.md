@@ -1,7 +1,7 @@
 <!--<img src = moments/year_t_42161_0.png width="400" height="400">-->
 # Welcome to Planet-inator!
 
-A simplified version of [super earth simulations run by stephen kane](https://manyworlds.space/2023/03/13/what-would-happen-if-our-solar-system-had-a-super-earth-like-many-others-chaos/), you don't have to learn astrophysics to inseert a planet wherever and with whatever dimensions you want
+A simplified version of [super earth simulations run by stephen kane](https://manyworlds.space/2023/03/13/what-would-happen-if-our-solar-system-had-a-super-earth-like-many-others-chaos/), you don't have to learn astrophysics to insert a planet wherever and with whatever dimensions you want
 
 
 
@@ -19,9 +19,10 @@ a little choas by the rouge planet<br>
 try it yourself:
 
 ```bash
+git clone https://github.com/disgruntled-penguin/planet-inator.git
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements
+pip install -r requirements.txt
 python3 render.py
 ```
 change number of asteroids being loaded: (default is 115 combined)
