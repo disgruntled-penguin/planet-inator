@@ -1,12 +1,14 @@
-pygame
-spock
-rebound
-numpy
-matplotlib
+pygame==2.5.2
+spock-config==0.1.7
+rebound==3.26.2
+numpy==2.0.1
 tk
-click
-opencv-python
-pygame_gui
-pandas
-IPython
-webcolors
+matplotlib==3.9.0
+click==8.1.7
+opencv-python==4.10.0.82
+pygame-gui==0.6.10
+pandas==2.2.2
+IPython==8.25.0
+webcolors==2.0
+
+#as of july 2025
